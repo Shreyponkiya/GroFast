@@ -1,118 +1,229 @@
 import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
-const DeliveryMessage = ({ msg }) => {
-  const [status, setStatus] = useState(null);
-
-  const handlePicked = () => {
-    setStatus("picked");
-  };
-
-  const handleRejected = () => {
-    setStatus("rejected");
-  };
+const DeliveryMessage = ({ deliveryBoyId, deliveryBoyName }) => {
+  const [socket, setSocket] = useState(null);
+  const [deliveryAssignments, setDeliveryAssignments] = useState([]);
+  const [activeDeliveries, setActiveDeliveries] = useState([]);
 
   useEffect(() => {
-    if (status === "picked") {
-      console.log("Order picked by delivery boy");
-    } else if (status === "rejected") {
-      console.log("Delivery rejected");
+    const newSocket = io("http://localhost:8000");
+    setSocket(newSocket);
+
+    // Join as delivery boy
+    newSocket.emit("joinAsDeliveryBoy", deliveryBoyId);
+
+    // Listen for new delivery assignments
+    newSocket.on("newDeliveryAssignment", (data) => {
+      console.log("New delivery assignment received:", data);
+      setDeliveryAssignments(prev => [...prev, {
+        id: Date.now(),
+        ...data,
+        status: "pending"
+      }]);
+    });
+
+    // Listen for delivery notifications
+    newSocket.on("deliveryNotification", (data) => {
+      console.log("Delivery notification received:", data);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [deliveryBoyId]);
+
+  const acceptDelivery = (assignment) => {
+    if (socket) {
+      socket.emit("acceptDelivery", {
+        orderId: assignment.orderId,
+        customerId: assignment.customerId,
+        shopkeeperId: assignment.shopkeeperId,
+        deliveryBoyId: deliveryBoyId,
+        deliveryBoyName: deliveryBoyName,
+        deliveryBoyPhone: "9876543210", // Replace with actual phone
+        timestamp: new Date().toISOString()
+      });
+
+      // Move to active deliveries
+      setActiveDeliveries(prev => [...prev, { ...assignment, status: "accepted" }]);
+      
+      // Remove from pending assignments
+      setDeliveryAssignments(prev => 
+        prev.filter(item => item.orderId !== assignment.orderId)
+      );
     }
-  }, [status]);
+  };
+
+  const rejectDelivery = (assignment, reason = "Not available") => {
+    if (socket) {
+      socket.emit("rejectDelivery", {
+        orderId: assignment.orderId,
+        shopkeeperId: assignment.shopkeeperId,
+        deliveryBoyId: deliveryBoyId,
+        reason: reason,
+        timestamp: new Date().toISOString()
+      });
+
+      // Remove from pending assignments
+      setDeliveryAssignments(prev => 
+        prev.filter(item => item.orderId !== assignment.orderId)
+      );
+    }
+  };
+
+  const updateLocation = (orderId, location) => {
+    if (socket) {
+      socket.emit("location", {
+        orderId: orderId,
+        customerId: activeDeliveries.find(d => d.orderId === orderId)?.customerId,
+        location: location,
+        deliveryBoyId: deliveryBoyId,
+        timestamp: new Date().toISOString()
+      });
+    }
+  };
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-4 border-l-4 border-yellow-500">
-      <div className="flex justify-between items-start mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Delivery Request</h2>
-        <span className="text-sm text-gray-500">{formatDate(msg.timestamp)}</span>
-      </div>
-
-      <div className="mb-4">
-        <p className="text-sm text-gray-600 mb-1">
-          Order ID: <span className="font-medium">{msg.orderDetailsId}</span>
-        </p>
-        <p className="text-sm text-gray-600">
-          Customer ID: <span className="font-medium">{msg.senderId}</span>
-        </p>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-800 mb-2">Products</h3>
-        <div className="bg-gray-50 rounded p-3">
-          {msg.products.map((item, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"
-            >
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center mr-3">
-                  {item.productId.productImage ? (
-                    <img
-                      src={`${import.meta.env.VITE_BASE_URL}/uploads/${item.productId.productImage}`}
-                      alt={item.productId.productName}
-                      className="w-full h-full object-cover rounded"
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-xs">No img</span>
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800">
-                    {item.productId.productName}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Code: {item.productId.productCode}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-medium text-gray-800">
-                  ₹{item.productId.productPrice}
-                </p>
-                <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-              </div>
-            </div>
-          ))}
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="bg-white rounded-lg shadow-md mb-6">
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-gray-800">
+            Delivery Dashboard - {deliveryBoyName}
+          </h1>
+          <p className="text-sm text-gray-600">ID: {deliveryBoyId}</p>
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        {status === null ? (
-          <>
-            <button
-              onClick={handleRejected}
-              className="px-4 py-2 bg-white border border-red-500 text-red-500 rounded hover:bg-red-50 font-medium transition-colors"
-            >
-              Reject
-            </button>
-            <button
-              onClick={handlePicked}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium transition-colors"
-            >
-              Picked
-            </button>
-          </>
-        ) : (
-          <div
-            className={`px-4 py-2 rounded font-medium ${
-              status === "picked"
-                ? "bg-blue-100 text-blue-800 border border-blue-200"
-                : "bg-red-100 text-red-800 border border-red-200"
-            }`}
-          >
-            {status === "picked" ? "Order Picked" : "Delivery Rejected"}
-          </div>
-        )}
+      {/* Pending Delivery Assignments */}
+      <div className="bg-white rounded-lg shadow-md mb-6">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800">
+            New Delivery Assignments ({deliveryAssignments.length})
+          </h2>
+        </div>
+        
+        <div className="p-4">
+          {deliveryAssignments.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No new assignments</p>
+          ) : (
+            deliveryAssignments.map((assignment) => (
+              <div key={assignment.id} className="border border-orange-200 rounded-lg p-4 mb-4 bg-orange-50">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-800">
+                      Order #{assignment.orderId}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Customer: {assignment.customerId}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Time: {formatDate(assignment.timestamp)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">
+                      NEW
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <p className="text-sm text-gray-700 mb-1">
+                    <strong>Address:</strong> {assignment.customerAddress}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    <strong>Phone:</strong> {assignment.customerPhone}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Estimated Time:</strong> {assignment.estimatedTime}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => acceptDelivery(assignment)}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium transition-colors"
+                  >
+                    Accept Delivery
+                  </button>
+                  <button
+                    onClick={() => rejectDelivery(assignment)}
+                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 font-medium transition-colors"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Active Deliveries */}
+      <div className="bg-white rounded-lg shadow-md">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Active Deliveries ({activeDeliveries.length})
+          </h2>
+        </div>
+        
+        <div className="p-4">
+          {activeDeliveries.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No active deliveries</p>
+          ) : (
+            activeDeliveries.map((delivery) => (
+              <div key={delivery.orderId} className="border border-blue-200 rounded-lg p-4 mb-4 bg-blue-50">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-800">
+                      Order #{delivery.orderId}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Customer: {delivery.customerId}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                      IN PROGRESS
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <p className="text-sm text-gray-700 mb-1">
+                    <strong>Address:</strong> {delivery.customerAddress}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Phone:</strong> {delivery.customerPhone}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => updateLocation(delivery.orderId, { lat: 23.0225, lng: 72.5714 })}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium transition-colors"
+                  >
+                    Update Location
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 font-medium transition-colors"
+                  >
+                    Mark Delivered
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

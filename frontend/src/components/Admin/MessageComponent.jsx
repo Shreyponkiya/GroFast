@@ -1,35 +1,80 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+
 const MessageComponent = ({ msg }) => {
   const [socket, setSocket] = useState(null);
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     const newSocket = io("http://localhost:8000");
     setSocket(newSocket);
+
+    // Join the shopkeeper's room
+    newSocket.emit("join", "current_shopkeeper_id"); // Replace with actual shopkeeper ID
+
+    // Listen for admin action confirmations
+    newSocket.on("adminActionUpdate", (data) => {
+      console.log("Admin action update:", data);
+    });
+
+    newSocket.on("messageSent", (data) => {
+      console.log("Message sent confirmation:", data);
+    });
+
     return () => {
       newSocket.disconnect();
     };
   }, []);
-  
-
-  console.log(msg);
-  const [status, setStatus] = useState(null);
 
   const handleApprove = (orderData) => {
-    socket.emit("approveOrder", orderData);
+    // When approving, send message to delivery boy
+    socket.emit("approveOrder", {
+      orderId: msg.orderDetailsId,
+      customerId: msg.senderId,
+      shopkeeperId: "current_shopkeeper_id", // Replace with actual shopkeeper ID
+      deliveryBoyId: "delivery_boy_123", // Replace with actual delivery boy ID or leave null for broadcast
+      customerAddress: msg.customerAddress || "Customer Address",
+      customerPhone: msg.customerPhone || "Customer Phone",
+      orderDetails: orderData,
+      estimatedTime: "30 minutes",
+      timestamp: new Date().toISOString()
+    });
+    
     setStatus("approved");
   };
 
   const handleReject = (orderData) => {
-    socket.emit("rejectOrder", orderData);
+    // When rejecting, send message to customer
+    socket.emit("rejectOrder", {
+      orderId: msg.orderDetailsId,
+      customerId: msg.senderId,
+      shopkeeperId: "current_shopkeeper_id", // Replace with actual shopkeeper ID
+      rejectionReason: "Sorry, item is out of stock", // You can make this dynamic
+      timestamp: new Date().toISOString()
+    });
+    
     setStatus("rejected");
+  };
+
+  // Send custom message to customer
+  const sendCustomMessage = (message) => {
+    if (socket) {
+      socket.emit("sendAdminMessage", {
+        customerId: msg.senderId,
+        orderId: msg.orderDetailsId,
+        message: message,
+        adminId: "current_shopkeeper_id" // Replace with actual shopkeeper ID
+      });
+    }
   };
 
   useEffect(() => {
     if (status === "approved") {
       console.log("Order approved");
-    } else {
+      sendCustomMessage(`Your order ${msg.orderDetailsId} has been approved and is being processed.`);
+    } else if (status === "rejected") {
       console.log("Order rejected");
+      sendCustomMessage(`Your order ${msg.orderDetailsId} has been rejected. Please contact us for more details.`);
     }
   }, [status]);
 
