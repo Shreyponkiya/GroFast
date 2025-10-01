@@ -1,6 +1,6 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getProfile, logout } from "../../redux/slices/authSlice";
+import { getProfile } from "../../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrderById } from "../../redux/slices/orderSlice";
 import { io } from "socket.io-client";
@@ -8,7 +8,7 @@ import { io } from "socket.io-client";
 const Order = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [socket,setSocket] = useState(null);
+  const [socket, setSocket] = useState(null);
   const { placeOrderId } = useParams();
   const [orderDetails, setOrderDetails] = useState(null);
   const [buyFromShopName, setBuyFromShopName] = useState([]);
@@ -24,17 +24,16 @@ const Order = () => {
   }, []);
 
   useEffect(() => {
-  dispatch(getProfile());
-}, [dispatch]);
-
+    dispatch(getProfile());
+  }, [dispatch]);
 
   useEffect(() => {
     const fetchOrder = async () => {
       setLoading(true);
       try {
         const response = await dispatch(getOrderById(placeOrderId));
-        console.log("response",response)
-        console.log("response.payload",response.payload)
+        console.log("response", response);
+        console.log("response.payload", response.payload);
         setOrderDetails(response.payload);
         handleFindShopName(response.payload.order.products);
 
@@ -49,69 +48,67 @@ const Order = () => {
     fetchOrder();
   }, [dispatch, placeOrderId]);
 
-useEffect(() => {
-  console.log("orderDetails?.order?._id", orderDetails?.order?._id);
-  console.log("socket", socket );
-  console.log("user", user );
-  if (user && socket && orderDetails?.order?._id) {
-    console.log("location is send to socket.io")
-    socket.emit("join", user._id);
-    sendRequest();
-  }
-}, [socket,user, orderDetails]);
+  useEffect(() => {
+    console.log("orderDetails?.order?._id", orderDetails?.order?._id);
+    console.log("socket", socket);
+    console.log("user", user);
+    if (user && socket && orderDetails?.order?._id) {
+      console.log("location is send to socket.io");
+      socket.emit("join", user._id);
+      sendRequest();
+    }
+  }, [socket, user, orderDetails]);
 
-const sendRequest = () => {
-  if (!user?._id || !orderDetails?.order?._id) {
-    alert("Please log in and select a user to send order request");
-    return;
-  }
+  const sendRequest = () => {
+    if (!user?._id || !orderDetails?.order?._id) {
+      alert("Please log in and select a user to send order request");
+      return;
+    }
 
-  const msgData = {
-    senderId: user._id,
-    orderDetailsId: orderDetails.order._id,
-    products: orderDetails.order.products.map((product) => ({
-      productId: product.productId,
-      quantity: product.quantity,
-    })),    
-    shopkeeperId: buyFromShopName.map((shop) => shop.createdById),
-    timestamp: new Date().toISOString(),
+    const msgData = {
+      senderId: user._id,
+      orderDetailsId: orderDetails.order._id,
+      products: orderDetails.order.products.map((product) => ({
+        productId: product.productId,
+        quantity: product.quantity,
+      })),
+      shopkeeperId: buyFromShopName.map((shop) => shop.createdById),
+      timestamp: new Date().toISOString(),
+    };
+
+    if (socket) {
+      socket.emit("sendOrderRequest", msgData);
+    } else {
+      alert("Socket connection not established");
+    }
   };
 
-  if (socket) {
-    socket.emit("sendOrderRequest", msgData);
-  } else {
-    alert("Socket connection not established");
-  }
-};
-
   // GetShopName
-const handleFindShopName = (products) => {
-  console.log("Products:", products);
+  const handleFindShopName = (products) => {
+    console.log("Products:", products);
 
-  // Extract relevant admin shop data including createdBy._id
-const shopList = products
-  .filter((product) => product.productId.createdBy.roleDetails?.admin)
-  .map((product) => {
-    const createdBy = product.productId.createdBy;
-    const createdById = createdBy._id;
-    const admin = createdBy.roleDetails.admin;
+    // Extract relevant admin shop data including createdBy._id
+    const shopList = products
+      .filter((product) => product.productId.createdBy.roleDetails?.admin)
+      .map((product) => {
+        const createdBy = product.productId.createdBy;
+        const createdById = createdBy._id;
+        const admin = createdBy.roleDetails.admin;
 
-    return {
-      createdById,
-      ...admin,
-    };
-  });
+        return {
+          createdById,
+          ...admin,
+        };
+      });
 
+    // Remove duplicates based on shopGST
+    const uniqueShops = Array.from(
+      new Map(shopList.map((shop) => [shop.shopGST, shop])).values()
+    );
 
-  // Remove duplicates based on shopGST
-  const uniqueShops = Array.from(
-    new Map(shopList.map((shop) => [shop.shopGST, shop])).values()
-  );
-
-  console.log("Unique Shops with createdById:", uniqueShops);
-  setBuyFromShopName(uniqueShops);
-};
-
+    console.log("Unique Shops with createdById:", uniqueShops);
+    setBuyFromShopName(uniqueShops);
+  };
 
   // Format order date
   const formatDate = (dateString) => {

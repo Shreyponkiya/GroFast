@@ -179,4 +179,4 @@ const MessageComponent = ({ msg }) => {
   );
 };
 
-export default MessageComponent;
+export default MessageComponent;  

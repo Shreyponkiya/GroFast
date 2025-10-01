@@ -26,6 +26,8 @@ const Login = () => {
         navigate("/admin/dashboard");
       } else if (user.role === "deliveryBoy") {
         navigate("/delivery/dashboard");
+      } else if (user.role === "superadmin") {
+        navigate("/superadmin/dashboard");
       }
     }
   }, [isAuthenticated, user, navigate]);

@@ -144,7 +144,7 @@ const Register = () => {
       setIsSubmitting(true);
       try {
         // Remove confirmPassword from the data to be sent
-        const { confirmPassword, ...registerData } = formData;
+        const { ...registerData } = formData;
 
         // Structure the data exactly as it's already organized in the form state
         // This now matches the MongoDB schema structure perfectly

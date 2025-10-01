@@ -4,7 +4,33 @@ import {
   fetchCategories,
   addProduct
 } from "../../redux/slices/ProductSlice";
-import { Upload, Plus, AlertTriangle, Check } from "lucide-react";
+import { Upload, Plus, AlertTriangle, Check, X } from "lucide-react";
+
+// Toast Component
+const Toast = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const Icon = type === 'success' ? Check : AlertTriangle;
+
+  return (
+    <div className="fixed top-4 right-4 z-50">
+      <div className={`${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm`}>
+        <Icon size={20} />
+        <span className="flex-1">{message}</span>
+        <button onClick={onClose} className="text-white hover:text-gray-200">
+          <X size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const AddProduct = ({ selectedCategory }) => {
   const dispatch = useDispatch();
@@ -15,6 +41,8 @@ const AddProduct = ({ selectedCategory }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isImageUploaded, setIsImageUploaded] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [toast, setToast] = useState(null);
   
   const [formData, setFormData] = useState({
     productName: "",
@@ -32,6 +60,151 @@ const AddProduct = ({ selectedCategory }) => {
     return "PRD" + Math.floor(100000 + Math.random() * 900000);
   }
 
+  // Show toast message
+  const showToast = (message, type) => {
+    setToast({ message, type });
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const errors = {};
+
+    // Product Name validation
+    if (!formData.productName.trim()) {
+      errors.productName = "Product name is required";
+    } else if (formData.productName.trim().length < 3) {
+      errors.productName = "Product name must be at least 3 characters";
+    } else if (formData.productName.trim().length > 100) {
+      errors.productName = "Product name must not exceed 100 characters";
+    }
+
+    // Product Description validation
+    if (formData.productDescription.trim() && formData.productDescription.trim().length > 500) {
+      errors.productDescription = "Description must not exceed 500 characters";
+    }
+
+    // Product Price validation
+    if (!formData.productPrice) {
+      errors.productPrice = "Price is required";
+    } else {
+      const price = parseFloat(formData.productPrice);
+      if (isNaN(price)) {
+        errors.productPrice = "Price must be a valid number";
+      } else if (price < 0) {
+        errors.productPrice = "Price cannot be negative";
+      } else if (price > 1000000) {
+        errors.productPrice = "Price cannot exceed ₹10,00,000";
+      } else if (price === 0) {
+        errors.productPrice = "Price must be greater than 0";
+      }
+    }
+
+    // Product Quantity validation
+    if (formData.productQuantity !== "") {
+      const quantity = parseInt(formData.productQuantity);
+      if (isNaN(quantity)) {
+        errors.productQuantity = "Quantity must be a valid number";
+      } else if (quantity < 0) {
+        errors.productQuantity = "Quantity cannot be negative";
+      } else if (quantity > 100000) {
+        errors.productQuantity = "Quantity cannot exceed 1,00,000";
+      }
+    }
+
+    // Product Category validation
+    if (!formData.productCategory) {
+      errors.productCategory = "Category is required";
+    }
+
+    // Product Image validation
+    if (!formData.productImage) {
+      errors.productImage = "Product image is required";
+    }
+
+    // Created By validation
+    if (!formData.createdBy) {
+      errors.createdBy = "User authentication required";
+    }
+
+    return errors;
+  };
+
+  // Validate individual field on change
+  const validateField = (name, value) => {
+    const errors = { ...validationErrors };
+    
+    switch (name) {
+      case 'productName':
+        if (!value.trim()) {
+          errors.productName = "Product name is required";
+        } else if (value.trim().length < 3) {
+          errors.productName = "Product name must be at least 3 characters";
+        } else if (value.trim().length > 100) {
+          errors.productName = "Product name must not exceed 100 characters";
+        } else {
+          delete errors.productName;
+        }
+        break;
+
+      case 'productDescription':
+        if (value.trim() && value.trim().length > 500) {
+          errors.productDescription = "Description must not exceed 500 characters";
+        } else {
+          delete errors.productDescription;
+        }
+        break;
+
+      case 'productPrice':
+        if (!value) {
+          errors.productPrice = "Price is required";
+        } else {
+          const price = parseFloat(value);
+          if (isNaN(price)) {
+            errors.productPrice = "Price must be a valid number";
+          } else if (price < 0) {
+            errors.productPrice = "Price cannot be negative";
+          } else if (price > 1000000) {
+            errors.productPrice = "Price cannot exceed ₹10,00,000";
+          } else if (price === 0) {
+            errors.productPrice = "Price must be greater than 0";
+          } else {
+            delete errors.productPrice;
+          }
+        }
+        break;
+
+      case 'productQuantity':
+        if (value !== "") {
+          const quantity = parseInt(value);
+          if (isNaN(quantity)) {
+            errors.productQuantity = "Quantity must be a valid number";
+          } else if (quantity < 0) {
+            errors.productQuantity = "Quantity cannot be negative";
+          } else if (quantity > 100000) {
+            errors.productQuantity = "Quantity cannot exceed 1,00,000";
+          } else {
+            delete errors.productQuantity;
+          }
+        } else {
+          delete errors.productQuantity;
+        }
+        break;
+
+      case 'productCategory':
+        if (!value) {
+          errors.productCategory = "Category is required";
+        } else {
+          delete errors.productCategory;
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setValidationErrors(errors);
+  };
+
   useEffect(() => {
     // Fetch categories on component mount
     const fetchCategoriesData = async () => {
@@ -40,6 +213,7 @@ const AddProduct = ({ selectedCategory }) => {
         setCategories(data.payload.categories);
       } catch (error) {
         console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", "error");
       }
     };
     fetchCategoriesData();
@@ -52,8 +226,14 @@ const AddProduct = ({ selectedCategory }) => {
         ...prev,
         productCategory: selectedCategory.id
       }));
+      // Clear category validation error if exists
+      if (validationErrors.productCategory) {
+        const errors = { ...validationErrors };
+        delete errors.productCategory;
+        setValidationErrors(errors);
+      }
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, validationErrors.productCategory]);
 
   // Update createdBy when user changes
   useEffect(() => {
@@ -71,19 +251,41 @@ const AddProduct = ({ selectedCategory }) => {
       ...formData,
       [name]: value,
     });
+    
+    // Validate field on change
+    validateField(name, value);
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // In a real implementation, you would upload this to your server/cloud storage
-      // For now, we'll just use a local URL to preview the image
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        showToast("File size must not exceed 5MB", "error");
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        showToast("Only JPG, PNG, and GIF files are allowed", "error");
+        return;
+      }
+
       console.log("File uploaded:", file);
-       setFormData({
+      setFormData({
         ...formData,
-        productImage: file, // In production, this would be a URL
+        productImage: file,
       });
       setIsImageUploaded(true);
+      
+      // Clear image validation error if exists
+      if (validationErrors.productImage) {
+        const errors = { ...validationErrors };
+        delete errors.productImage;
+        setValidationErrors(errors);
+      }
       
       // Create a preview
       const reader = new FileReader();
@@ -98,15 +300,19 @@ const AddProduct = ({ selectedCategory }) => {
     setFormData({
       productName: "",
       productDescription: "",
-      productPrice: 0,
+      productPrice: "",
       productQuantity: "",
-      productImage: "not available",
+      productImage: "",
       productCode: generateProductCode(),
       productCategory: selectedCategory ? selectedCategory.id : "",
       createdBy: user?._id || "",
     });
     setIsImageUploaded(false);
     setImagePreview(null);
+    setValidationErrors({});
+    setSuccessMessage("");
+    setErrorMessage("");
+    showToast("Form reset successfully", "success");
   };
 
   const handleSubmit = async (e) => {
@@ -114,46 +320,62 @@ const AddProduct = ({ selectedCategory }) => {
     setIsLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
-  
+
+    // Validate form
+    const errors = validateForm();
+    
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setIsLoading(false);
+      showToast("Please fix all validation errors", "error");
+      return;
+    }
+
     try {
-      // Validation
-      if (!formData.productName || !formData.productPrice || !formData.productCategory || !formData.productImage) {
-        setErrorMessage("Please fill in all required fields.");
-        setIsLoading(false);
-        return;
-      }
-  
       // Creating FormData object to send the file along with other form fields
       const formDataToSend = new FormData();
-      formDataToSend.append("productName", formData.productName);
-      formDataToSend.append("productDescription", formData.productDescription);
+      formDataToSend.append("productName", formData.productName.trim());
+      formDataToSend.append("productDescription", formData.productDescription.trim());
       formDataToSend.append("productPrice", formData.productPrice);
-      formDataToSend.append("productQuantity", formData.productQuantity);
+      formDataToSend.append("productQuantity", formData.productQuantity || "0");
       formDataToSend.append("productCategory", formData.productCategory);
       formDataToSend.append("productCode", formData.productCode);
       formDataToSend.append("createdBy", formData.createdBy);
-      formDataToSend.append("productImage", formData.productImage); // Append image file here
-  
-      const result = await dispatch(addProduct(formDataToSend)); // Send the FormData instead of plain JSON
+      formDataToSend.append("productImage", formData.productImage);
+
+      const result = await dispatch(addProduct(formDataToSend));
       console.log("Add product result:", result);
-  
+
       if (result.payload && result.payload.success) {
         setSuccessMessage("Product added successfully!");
+        showToast("Product added successfully!", "success");
         resetForm();
       } else {
-        setErrorMessage("Failed to add product. Please try again.");
+        const errorMsg = result.payload?.message || "Failed to add product. Please try again.";
+        setErrorMessage(errorMsg);
+        showToast(errorMsg, "error");
       }
     } catch (error) {
       console.error("Error adding product:", error);
-      setErrorMessage("An error occurred. Please try again.");
+      const errorMsg = error.response?.data?.message || "An error occurred. Please try again.";
+      setErrorMessage(errorMsg);
+      showToast(errorMsg, "error");
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Toast Messages */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800 mb-2">Add New Product</h1>
         <p className="text-gray-600">Create a new product for your inventory</p>
@@ -189,10 +411,15 @@ const AddProduct = ({ selectedCategory }) => {
                 name="productName"
                 value={formData.productName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                  validationErrors.productName ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="Enter product name"
                 required
               />
+              {validationErrors.productName && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.productName}</p>
+              )}
             </div>
 
             {/* Product Description */}
@@ -206,9 +433,17 @@ const AddProduct = ({ selectedCategory }) => {
                 value={formData.productDescription}
                 onChange={handleChange}
                 rows="4"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                  validationErrors.productDescription ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="Describe your product"
               ></textarea>
+              {validationErrors.productDescription && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.productDescription}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.productDescription.length}/500 characters
+              </p>
             </div>
 
             {/* Category Selection */}
@@ -221,7 +456,9 @@ const AddProduct = ({ selectedCategory }) => {
                 name="productCategory"
                 value={formData.productCategory}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                  validationErrors.productCategory ? 'border-red-500' : 'border-gray-300'
+                }`}
                 required
               >
                 <option value="">Select a category</option>
@@ -231,6 +468,9 @@ const AddProduct = ({ selectedCategory }) => {
                   </option>
                 ))}
               </select>
+              {validationErrors.productCategory && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.productCategory}</p>
+              )}
             </div>
 
             {/* Product Code (Auto-Generated) */}
@@ -255,9 +495,11 @@ const AddProduct = ({ selectedCategory }) => {
             {/* Product Image Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Product Image
+                Product Image *
               </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md h-48">
+              <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md h-48 ${
+                validationErrors.productImage ? 'border-red-500' : 'border-gray-300'
+              }`}>
                 {imagePreview ? (
                   <div className="relative w-full h-full">
                     <img
@@ -268,9 +510,11 @@ const AddProduct = ({ selectedCategory }) => {
                     <button
                       type="button"
                       onClick={() => {
-                        setFormData({...formData, productImage: "not available"});
+                        setFormData({...formData, productImage: ""});
                         setIsImageUploaded(false);
                         setImagePreview(null);
+                        // Add validation error for required image
+                        setValidationErrors(prev => ({...prev, productImage: "Product image is required"}));
                       }}
                       className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2 hover:bg-red-600 transition-colors"
                     >
@@ -306,6 +550,9 @@ const AddProduct = ({ selectedCategory }) => {
                   </div>
                 )}
               </div>
+              {validationErrors.productImage && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.productImage}</p>
+              )}
             </div>
 
             {/* Product Price */}
@@ -321,10 +568,15 @@ const AddProduct = ({ selectedCategory }) => {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                  validationErrors.productPrice ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="0.00"
                 required
               />
+              {validationErrors.productPrice && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.productPrice}</p>
+              )}
             </div>
 
             {/* Product Quantity */}
@@ -339,9 +591,14 @@ const AddProduct = ({ selectedCategory }) => {
                 value={formData.productQuantity}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                  validationErrors.productQuantity ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="0"
               />
+              {validationErrors.productQuantity && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.productQuantity}</p>
+              )}
             </div>
           </div>
         </div>
@@ -382,232 +639,3 @@ const AddProduct = ({ selectedCategory }) => {
 };
 
 export default AddProduct;
-
-// import React, { useState, useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { useNavigate } from "react-router-dom";
-// import { getProfile } from "../redux/slices/authSlice";
-// import { toast } from "react-hot-toast";
-// import { fetchCategories } from "../redux/slices/ProductSlice";
-// import { DownOutlined } from "@ant-design/icons";
-// import { Button, Dropdown, Space } from "antd";
-// import axios from "axios";
-// import { useFormik } from "formik";
-// import Validations from "../SchmaValidations/Validations";
-
-// const AddProductPage = () => {
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-//   const { user } = useSelector((state) => state.auth);
-//   const [categories, setCategories] = useState([]);
-//   const [loading, setLoading] = useState(false);
-
-//   useEffect(() => {
-//     dispatch(getProfile());
-//   }, [dispatch]);
-
-//   useEffect(() => {
-//     handleCategoryFetch();
-//   }, []);
-
-//   const handleCategoryFetch = async () => {
-//     const data = await dispatch(fetchCategories());
-//     setCategories(data.payload.categories);
-//   };
-
-//   const formik = useFormik({
-//     initialValues: {
-//       createdBy: user?._id || "",
-//       productCode: "",
-//       productName: "",
-//       productDescription: "",
-//       productPrice: "",
-//       productImage: "not available",
-//       productCategory: "",
-//     },
-//     validationSchema: Validations.productSchema,
-//     onSubmit: async (values, { resetForm }) => {
-//       setLoading(true);
-//       try {
-//         const token = localStorage.getItem("token");
-//         const response = await axios.post(
-//           "http://localhost:8000/api/admin/add-product",
-//           values,
-//           {
-//             headers: {
-//               "Content-Type": "application/json",
-//               Authorization: `Bearer ${token}`,
-//             },
-//           }
-//         );
-
-//         if (response.status === 201) {
-//           toast.success("Product added successfully!");
-//           resetForm();
-//         } else {
-//           toast.error("Failed to add product.");
-//         }
-//       } catch (error) {
-//         toast.error("An error occurred. Please try again.");
-//         console.error("Error:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     },
-//   });
-
-//   const handleDropdownClick = ({ key }) => {
-//     formik.setFieldValue("productCategory", key);
-//   };
-
-//   const menuProps = {
-//     items: categories.map((cat) => ({
-//       key: cat._id,
-//       label: cat.categoryName,
-//     })),
-//     onClick: handleDropdownClick,
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-//         <div className="rounded-lg border-4 border-dashed border-gray-200 p-6 bg-white shadow-md">
-//           <h2 className="text-2xl font-bold text-gray-800 mb-6">
-//             Add New Product
-//           </h2>
-//           <form onSubmit={formik.handleSubmit}>
-//             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//               {/* Product Code */}
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Product Code
-//                 </label>
-//                 <input
-//                   type="text"
-//                   name="productCode"
-//                   value={formik.values.productCode}
-//                   onChange={formik.handleChange}
-//                   className="w-full border p-2 rounded"
-//                 />
-//                 {formik.touched.productCode && formik.errors.productCode && (
-//                   <p className="text-red-500 text-sm">
-//                     {formik.errors.productCode}
-//                   </p>
-//                 )}
-//               </div>
-
-//               {/* Product Name */}
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Product Name
-//                 </label>
-//                 <input
-//                   type="text"
-//                   name="productName"
-//                   value={formik.values.productName}
-//                   onChange={formik.handleChange}
-//                   className="w-full border p-2 rounded"
-//                 />
-//                 {formik.touched.productName && formik.errors.productName && (
-//                   <p className="text-red-500 text-sm">
-//                     {formik.errors.productName}
-//                   </p>
-//                 )}
-//               </div>
-
-//               {/* Description */}
-//               <div className="md:col-span-2">
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Description
-//                 </label>
-//                 <textarea
-//                   name="productDescription"
-//                   value={formik.values.productDescription}
-//                   onChange={formik.handleChange}
-//                   rows="3"
-//                   className="w-full border p-2 rounded"
-//                 />
-//                 {formik.touched.productDescription &&
-//                   formik.errors.productDescription && (
-//                     <p className="text-red-500 text-sm">
-//                       {formik.errors.productDescription}
-//                     </p>
-//                   )}
-//               </div>
-
-//               {/* Price */}
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Price (₹)
-//                 </label>
-//                 <input
-//                   type="number"
-//                   name="productPrice"
-//                   value={formik.values.productPrice}
-//                   onChange={formik.handleChange}
-//                   className="w-full border p-2 rounded"
-//                 />
-//                 {formik.touched.productPrice && formik.errors.productPrice && (
-//                   <p className="text-red-500 text-sm">
-//                     {formik.errors.productPrice}
-//                   </p>
-//                 )}
-//               </div>
-
-//               {/* Category */}
-//               <div className="pt-6">
-//                 <Dropdown menu={menuProps}>
-//                   <Button className="w-40">
-//                     <Space>
-//                       {categories.find(
-//                         (cat) => cat._id === formik.values.productCategory
-//                       )?.categoryName || "Select Category"}
-//                       <DownOutlined />
-//                     </Space>
-//                   </Button>
-//                 </Dropdown>
-//                 {formik.touched.productCategory &&
-//                   formik.errors.productCategory && (
-//                     <p className="text-red-500 text-sm mt-1">
-//                       {formik.errors.productCategory}
-//                     </p>
-//                   )}
-//               </div>
-
-//               {/* Image */}
-//               <div className="md:col-span-2">
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Product Image (URL)
-//                 </label>
-//                 <input
-//                   type="text"
-//                   name="productImage"
-//                   value={formik.values.productImage}
-//                   onChange={formik.handleChange}
-//                   className="w-full border p-2 rounded"
-//                 />
-//                 {formik.touched.productImage && formik.errors.productImage && (
-//                   <p className="text-red-500 text-sm">
-//                     {formik.errors.productImage}
-//                   </p>
-//                 )}
-//               </div>
-//             </div>
-
-//             <div className="mt-6 flex justify-end">
-//               <button
-//                 type="submit"
-//                 disabled={loading}
-//                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-//               >
-//                 {loading ? "Adding..." : "Add Product"}
-//               </button>
-//             </div>
-//           </form>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default AddProductPage;

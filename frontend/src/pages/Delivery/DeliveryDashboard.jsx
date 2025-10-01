@@ -19,7 +19,7 @@ const DeliveryBoyDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentView, setCurrentView] = useState(null);
   const [deliveryRequests, setDeliveryRequests] = useState([]);
-  const [msg, setMsg] = useState(null);
+  // const [msg, setMsg] = useState(null);
   const [activeStatus, setActiveStatus] = useState(true);
   const [pendingDeliveries, setPendingDeliveries] = useState([
     {
@@ -177,7 +177,7 @@ const DeliveryBoyDashboard = () => {
           completedDeliveries={completedDeliveries}
           deliveryRequests={deliveryRequests}
           user={user}
-          msg={msg}
+          // msg={msg}
           acceptDelivery={acceptDelivery}
           completeDelivery={completeDelivery}
           activeStatus={activeStatus}

@@ -78,6 +78,14 @@ function App() {
                 </PrivateRoute>
               }
             />
+            <Route
+              path="/superadmin/dashboard"
+              element={
+                <PrivateRoute allowedRoles={["superadmin"]}>
+                  <DeliveryDashboard />
+                </PrivateRoute>
+              }
+            />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
         </div>
