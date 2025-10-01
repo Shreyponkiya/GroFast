@@ -27,8 +27,6 @@ const io = new Server(server, {
   },
 });
 
-
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -54,6 +52,7 @@ app.use("/api/cart", cartRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/delivery", deliveryRouter);
+app.use("/api/superadmin", );
   
 // Socket.IO handling
 io.on("connection", (socket) => {

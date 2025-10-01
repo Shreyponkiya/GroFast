@@ -72,7 +72,7 @@ module.exports.getProductsByUserId = async function (userId) {
 module.exports.getProductByCategoryIdAndUserId = async function (
   categoryId,
   userId
-) {
+){
   const products = await productModel.find({
     productCategory: categoryId,
     createdBy: userId,

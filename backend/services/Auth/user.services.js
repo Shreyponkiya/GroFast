@@ -12,14 +12,28 @@ module.exports.createUser = async (userData) => {
   }
 };
 
+module.exports.createSuperAdmin = async (userData) => {
+  try {
+    const newUser = await userModel.create(userData);
+    if (!newUser) {
+      throw new Error("Super Admin creation failed");
+    }
+    await newUser.save();
+    return newUser;
+  } catch (error) {
+    throw new Error("Error creating Super Admin: " + error.message);
+  }
+};
+
 module.exports.loginUser = async (email, password) => {
   try {
     const user = await userModel.findOne({ email });
     if (!user) {
       return { success: false, message: "User not found" };
     }
-
+    console.log("user found:", password, user.password);
     const isMatch = await user.comparePassword(password);
+    console.log("isMatch", isMatch);
     if (!isMatch) {
       return { success: false, message: "Invalid credentials" };
     }
@@ -28,7 +42,7 @@ module.exports.loginUser = async (email, password) => {
     if (!token) {
       return { success: false, message: "Token generation failed" };
     }
-
+    console.log("User logged in:", user);
     return { success: true, user, token };
   } catch (error) {
     console.log("Error logging in user:", error);

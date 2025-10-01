@@ -47,7 +47,7 @@ module.exports.register = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
-
+    
     res
       .status(201)
       .json({ message: "User registered successfully", newUser, token });
@@ -71,14 +71,15 @@ module.exports.login = async (req, res) => {
         .status(400)
         .json({ message: "Password must be at least 6 characters" });
     }
+    console.log("email, password", email, password);
     const returnuser = await loginUser(email, password);
+    console.log("returnuser", returnuser);
     if (!returnuser.user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
     if (!returnuser.token) {
       return res.status(400).json({ message: "Token generation failed" });
     }    
-
     res.status(200).json({ message: "Login successful", user: returnuser.user, token: returnuser.token,message: returnuser.message });
   } catch (error) {
     console.log(error);

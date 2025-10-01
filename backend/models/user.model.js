@@ -21,12 +21,12 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin", "deliveryBoy"],
+      enum: ["user", "admin", "deliveryBoy", "superadmin"],
       default: "user",
     },
     roleDetails: {
-      user:{
-        userAddress:String
+      user: {
+        userAddress: String
       },
       admin: {
         shopName: String,
