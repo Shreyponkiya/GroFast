@@ -1,8 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const cartController = require('../../controllers/Customer/cart.controller');
-const authMiddleware = require('../../middlewere/user.middlewere');
-
+const cartController = require("../../controllers/Customer/cart.controller");
+const authMiddleware = require("../../middlewere/user.middlewere");
 
 router.post(
   "/create-cart",
@@ -14,6 +13,5 @@ router.get(
   authMiddleware.userMiddlewere,
   cartController.getCartByOrderId
 );
-
 
 module.exports = router;

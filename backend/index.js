@@ -31,11 +31,13 @@ const io = new Server(server, {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-}));
-app.use('/uploads', express.static('uploads'));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use("/uploads", express.static("uploads"));
 
 // DB connection
 try {
@@ -52,7 +54,6 @@ app.use("/api/cart", cartRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/delivery", deliveryRouter);
-app.use("/api/superadmin", );
   
 // Socket.IO handling
 io.on("connection", (socket) => {

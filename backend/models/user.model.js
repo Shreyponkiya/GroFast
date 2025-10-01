@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     },
     roleDetails: {
       user: {
-        userAddress: String
+        userAddress: String,
       },
       admin: {
         shopName: String,
@@ -49,6 +49,8 @@ const userSchema = new mongoose.Schema(
         },
       },
     },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
     address: {
       type: String,
       required: false,
@@ -74,7 +76,6 @@ userSchema.methods.comparePassword = async function (password) {
   return isMatch;
 };
 
-
 userSchema.statics.hashPassword = async function (password) {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -93,3 +94,34 @@ userSchema.statics.verifyAuthToken = async function (token) {
 const userModel = new mongoose.model("User", userSchema);
 
 module.exports = userModel;
+
+
+// const { DataTypes } = require("sequelize");
+// const { sequelize } = require("../config/db");
+
+// const User = sequelize.define("User", {
+//   id: {
+//     type: DataTypes.INTEGER,
+//     autoIncrement: true,
+//     primaryKey: true,
+//   },
+//   fullname: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   email: {
+//     type: DataTypes.STRING,
+//     unique: true,
+//     allowNull: false,
+//   },
+//   password: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   role: {
+//     type: DataTypes.STRING,
+//     defaultValue: "user",
+//   },
+// });
+
+// module.exports = User;

@@ -1,21 +1,22 @@
-const userMoldel = require('../models/user.model');
+const userMoldel = require("../models/user.model");
 
 module.exports.userMiddlewere = async (req, res, next) => {
   try {
-    const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
+    const token =
+      req.cookies.token || req.headers["authorization"]?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const decoded = await userMoldel.verifyAuthToken(token);
     if (!decoded) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     req.user = decoded;
     next();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
-}
+};

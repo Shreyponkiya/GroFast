@@ -3,6 +3,7 @@ const crypto = require("crypto");
 module.exports.createPaymentIntent = async (req, res) => {
   try {
     const raw = req.body.amount;
+    console.log("Raw amount from request:", raw);
     const amount = Number(typeof raw === "object" ? raw.amount : raw);
     console.log("Processed amount in rupees:", amount);
 

@@ -15,6 +15,17 @@ router.post(
   authMiddleware.userMiddlewere,
   adminController.addCategory
 );
+router.put(
+  "/update-product/:productId",
+  authMiddleware.userMiddlewere,
+  upload.single("productImage"),
+  adminController.updateProduct
+);
+router.put(
+  "/update-category/:categoryId",
+  authMiddleware.userMiddlewere,
+  adminController.updateCategory
+);
 router.get(
   "/get-products/:createdBy",
   authMiddleware.userMiddlewere,
@@ -26,10 +37,20 @@ router.get(
   adminController.getCategories
 );
 router.get(
-  "/get-product/:categoryId/:userId", 
+  "/get-product/:categoryId/:userId",
   authMiddleware.userMiddlewere,
   adminController.getProductByCategoryIdAndUserId
-)
+);
+router.delete(
+  "/delete-product/:productId",
+  authMiddleware.userMiddlewere,
+  adminController.deleteProduct
+);
+router.delete(
+  "/delete-category/:categoryId",
+  authMiddleware.userMiddlewere,
+  adminController.deleteCategory
+);
 // router.get(
 //   "/get-product/:categoryId/:userId",
 //   authMiddleware.userMiddlewere,

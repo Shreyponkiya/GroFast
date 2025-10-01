@@ -64,6 +64,65 @@ module.exports.createCategory = async function (categoryData) {
   return { success: true, message: "Category created successfully.", category };
 };
 
+module.exports.updateProduct = async function (productId, updateData) {
+  try {
+    // Check for duplicate productCode only if it is being updated
+    if (updateData.productCode) {
+      const existingProduct = await productModel.findOne({
+        productCode: updateData.productCode,
+        _id: { $ne: productId }, // exclude current product
+      });
+
+      // if (existingProduct) {
+      //   throw new Error(
+      //     `Product code ${updateData.productCode} already exists`
+      //   );
+      // }
+    }
+
+    const updatedProduct = await productModel.findByIdAndUpdate(
+      productId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) {
+      throw new Error("Product not found");
+    }
+
+    return {
+      success: true,
+      message: "Product updated successfully",
+      product: updatedProduct,
+    };
+  } catch (error) {
+    throw new Error("Error updating product: " + error.message);
+  }
+};
+
+
+module.exports.updateCategory = async function (categoryId, updateData) {
+  try {
+    const updatedCategory = await productCategoryModel.findByIdAndUpdate(
+      categoryId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedCategory) {
+      throw new Error("Category not found");
+    }
+
+    return {
+      success: true,
+      message: "Category updated successfully",
+      category: updatedCategory,
+    };
+  } catch (error) {
+    throw new Error("Error updating category: " + error.message);
+  }
+};
+
 module.exports.getProductsByUserId = async function (userId) {
   const products = await productModel.find({ createdBy: userId });
   return products;
@@ -83,4 +142,37 @@ module.exports.getProductByCategoryIdAndUserId = async function (
 module.exports.getAllCategories = async function () {
   const categories = await productCategoryModel.find({});
   return categories;
+};
+
+module.exports.deleteProduct = async function (productId) {
+  try {
+    const deletedProduct = await productModel.findByIdAndDelete(productId);
+    if (!deletedProduct) {
+      throw new Error("Product not found");
+    }
+    return {
+      success: true,
+      message: "Product deleted successfully",
+      product: deletedProduct,
+    };
+  } catch (error) {
+    throw new Error("Error deleting product: " + error.message);
+  }
+};
+module.exports.deleteCategory = async function (categoryId) {
+  try {
+    const deletedCategory = await productCategoryModel.findByIdAndDelete(
+      categoryId
+    );
+    if (!deletedCategory) {
+      throw new Error("Category not found");
+    }
+    return {
+      success: true,
+      message: "Category deleted successfully",
+      category: deletedCategory,
+    };
+  } catch (error) {
+    throw new Error("Error deleting category: " + error.message);
+  }
 };
