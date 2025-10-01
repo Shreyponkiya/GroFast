@@ -3,10 +3,16 @@ const customerServices = require("../../services/Customer/customer.services");
 // ✅ Get all products
 module.exports.getAllProducts = async (req, res) => {
   try {
-    const products = await customerServices.getAllProducts();
-    res.status(200).json(products);
+    const { page, limit, search } = req.query;
+
+    const result = await customerServices.getAllProducts(page, limit, search);
+
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: "Error fetching products",
+      error: error.message,
+    });
   }
 };
 

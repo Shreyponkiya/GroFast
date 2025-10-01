@@ -15,6 +15,7 @@ const cartRouter = require("./router/Customer/cart.router.js");
 const paymentRouter = require("./router/Customer/payment.router.js");
 const orderRouter = require("./router/Customer/order.router.js");
 const deliveryRouter = require("./router/Delivery/delivery.router.js");
+const superadminRouter = require("./router/SuperAdmin/superadmin.router.js");
 const orderSocket = require("./socket/orderSocket.js"); // ✅ you’ll create this
 const locationSocket = require("./socket/locationSocket.js"); // ✅ you’ll create this
 const app = express();
@@ -54,6 +55,7 @@ app.use("/api/cart", cartRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/delivery", deliveryRouter);
+app.use("/api/superadmin", superadminRouter);
   
 // Socket.IO handling
 io.on("connection", (socket) => {

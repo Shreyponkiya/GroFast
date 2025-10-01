@@ -1,5 +1,6 @@
 const instance = require("../../config/razorpay").instance;
 const crypto = require("crypto");
+
 module.exports.createPaymentIntent = async (req, res) => {
   try {
     const raw = req.body.amount;
