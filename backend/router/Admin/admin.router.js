@@ -35,19 +35,16 @@ router.put(
 );
 router.get(
   "/get-products/:createdBy",
-  authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
+  authMiddleware.userMiddlewere,  
   adminController.getProductsByUserId
 );
 router.get(
   "/get-categories",
-  authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
+  authMiddleware.userMiddlewere,  
   adminController.getCategories
 );
 router.get(
   "/get-product/:categoryId/:userId",
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
   authMiddleware.userMiddlewere,
   adminController.getProductByCategoryIdAndUserId
 );

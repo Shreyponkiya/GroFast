@@ -31,16 +31,19 @@ module.exports.register = async (req, res) => {
 
     const hashedPassword = await userModel.hashPassword(password);
 
-    const newUser = await createUser({
+    const newUser = await new userModel({
       fullname,
       email,
       password: hashedPassword,
       role,
       roleDetails,
-    });
+    }).save();
+
     if (!newUser) {
       return res.status(400).json({ message: "User registration failed" });
     }
+
+    console.log("newUser", newUser);
 
     const token = await newUser.generateAuthToken();
     if (!token) {
