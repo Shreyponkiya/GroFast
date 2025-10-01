@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../../redux/slices/authSlice";
-import logo from "../../assets/grofast-logo.png"; // Make sure to add this logo to your assets folder
+import logo from "../../assets/grofast-logo.png";
 import Sidelogo from "../../assets/side_image.png";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +14,7 @@ const Login = () => {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -19,15 +22,22 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Redirect based on user role
-      if (user.role === "user") {
-        navigate("/user/dashboard");
-      } else if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (user.role === "deliveryBoy") {
-        navigate("/delivery/dashboard");
-      } else if (user.role === "superadmin") {
-        navigate("/superadmin/dashboard");
+      // Redirect based on role
+      switch (user.role) {
+        case "user":
+          navigate("/user/dashboard");
+          break;
+        case "admin":
+          navigate("/admin/dashboard");
+          break;
+        case "deliveryBoy":
+          navigate("/delivery/dashboard");
+          break;
+        case "superadmin":
+          navigate("/superadmin/dashboard");
+          break;
+        default:
+          break;
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -35,24 +45,16 @@ const Login = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-
-    // Clear error when typing
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email is invalid";
-    }
 
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    }
+    if (!formData.password) newErrors.password = "Password is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -60,49 +62,50 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (validateForm()) {
-      setIsSubmitting(true);
-      try {
-        await dispatch(login(formData)).unwrap();
-      } catch (err) {
-        console.error("Login failed", err);
-      } finally {
-        setIsSubmitting(false);
-      }
+    if (!validateForm()) return;
+    setIsSubmitting(true);
+    try {
+      const result = await dispatch(login(formData)).unwrap();
+      console.log("Login successful:", result);
+      toast.success("Login successful!");
+    } catch (err) {
+      toast.error(err || "Login failed. Please try again.");
+      console.error("Login failed", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
-      <div className="lg:flex sm:flex w-full gap-8 ">
-        <div className="">
-          <img src={Sidelogo} alt="" className="h-140 w-220" />
+      <div className="flex flex-col lg:flex-row sm:flex-row w-full max-w-6xl gap-12 p-6">
+        {/* Side Image */}
+        <div className="hidden lg:flex flex-1 items-center justify-center">
+          <img
+            src={Sidelogo}
+            alt="Side"
+            className="h-96 w-auto object-cover rounded-xl shadow-lg"
+          />
         </div>
 
-        <div className="w-full mr-20 max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+        {/* Login Form */}
+        <div className="flex-1 max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Header */}
           <div className="bg-green-500 p-6 text-center">
-            <div className="flex justify-center mb-4">
-              <img src={logo} alt="GroFast Logo" className="h-12" />
-            </div>
+            <img src={logo} alt="GroFast Logo" className="h-12 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white">
               Welcome to GroFast
             </h2>
-            <p className="text-green-100">Sign in to your account</p>
+            <p className="text-green-100 mt-1">Sign in to your account</p>
           </div>
 
           <div className="p-8">
-            {error && (
-              <div className="mb-4 rounded bg-red-50 p-3 text-red-700">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="mb-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email */}
+              <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Email Address
                 </label>
@@ -112,69 +115,76 @@ const Login = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  placeholder="you@example.com"
                   className={`w-full rounded-lg border p-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="you@example.com"
                 />
                 {errors.email && (
-                  <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
                 )}
               </div>
 
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
                   <label
                     htmlFor="password"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Password
                   </label>
-                  <a
-                    href="#"
+                  <Link
+                    to="#"
                     className="text-xs text-green-600 hover:text-green-800"
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full rounded-lg border p-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    className={`w-full rounded-lg border p-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </span>
+                </div>
                 {errors.password && (
-                  <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+                  <p className="text-xs text-red-500 mt-1">{errors.password}</p>
                 )}
               </div>
 
-              
-
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-lg bg-green-500 py-3 text-center font-semibold text-white shadow-md transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-70"
+                className="w-full rounded-lg bg-green-500 py-3 text-white font-semibold shadow-md hover:bg-green-600 transition disabled:opacity-70"
               >
                 {isSubmitting ? "Signing in..." : "Sign In"}
               </button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
-                <Link
-                  to="/register"
-                  className="font-medium text-green-600 hover:text-green-800"
-                >
-                  Create an account
-                </Link>
-              </p>
-            </div>
+            {/* Footer */}
+            <p className="mt-6 text-center text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="font-medium text-green-600 hover:text-green-800"
+              >
+                Create an account
+              </Link>
+            </p>
           </div>
         </div>
       </div>

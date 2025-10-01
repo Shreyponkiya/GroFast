@@ -39,13 +39,15 @@ const UserDashboard = () => {
         // Fetch categories first
         const categoriesResponse = await dispatch(fetchCategories({}));
         if (categoriesResponse?.payload?.categories) {
+          console.log("categoriesResponse", categoriesResponse);
           setCategories(categoriesResponse.payload.categories);
         }
 
         // Then fetch products
         const productsResponse = await dispatch(fetchProducts({}));
         if (productsResponse?.payload) {
-          setProducts(productsResponse.payload);
+          console.log("productsResponse", productsResponse);
+          setProducts(productsResponse.payload.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);

@@ -17,13 +17,13 @@ import Payment from "./pages/Customer/Payment";
 import Order from "./pages/Customer/Order";
 // import AddCategories from './pages/AddCategories';
 import PrivateRoute from "./components/PrivateRoute";
-import { Toaster } from "react-hot-toast";
+import { toast, ToastContainer } from "react-toastify";
 import "./App.css";
 
 function App() {
   return (
     <Provider store={store}>
-      <Toaster position="top-right" reverseOrder={true} />
+      <ToastContainer position="top-right" autoClose={5000} />
       <Router>
         <div className="min-h-screen bg-gray-50">
           <Routes>
