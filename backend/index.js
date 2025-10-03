@@ -56,7 +56,7 @@ app.use("/api/payment", paymentRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/delivery", deliveryRouter);
 app.use("/api/superadmin", superadminRouter);
-  
+
 // Socket.IO handling
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);

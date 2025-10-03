@@ -21,6 +21,10 @@ module.exports.createPaymentIntent = async (req, res) => {
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1,
     });
+    console.log(
+      "Creating Razorpay order for amount (in paise):",
+      Math.round(amount * 100)
+    );
 
     res.status(200).json({
       success: true,
@@ -44,6 +48,7 @@ module.exports.createPaymentIntent = async (req, res) => {
 module.exports.getKey = async (req, res) => {
   try {
     const key = process.env.RAZORPAY_KEY_ID;
+    console.log("Razorpay Key ID:", key);
     res.status(200).json({
       success: true,
       key: key,
@@ -73,6 +78,7 @@ module.exports.verifyPayment = async (req, res) => {
     console.log("Received Signature:", typeof razorpay_signature);
 
     if (generatedSignature === razorpay_signature) {
+      console.log("Payment verified successfully");
       res.status(200).json({
         success: true,
         message: "Payment verified successfully",

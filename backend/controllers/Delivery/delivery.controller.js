@@ -35,10 +35,3 @@ module.exports.updateDeliveryBoyStatus = async (req, res) => {
       });
   }
 };
-
-// const updateDeliveryBoyLocation = async (req, res) => {
-  
-  
-// }
-
-
