@@ -20,14 +20,14 @@ module.exports.addProduct = async (req, res) => {
       productCategory,
       productQuantity,
       createdBy,
-      productImage,
     } = req.body;
+
 
     console.log("req.file:", req.body);
 
     // Multer adds req.file — this will contain uploaded image info
-    // const productImage = req.file ? req.file.filename : null;
-
+    const productImage = req.file ? req.file.filename : null;
+    console.log("productImage:", productImage);
     if (
       !productCode ||
       !productName ||
