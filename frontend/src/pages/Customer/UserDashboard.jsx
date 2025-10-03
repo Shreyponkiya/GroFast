@@ -4,6 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { logout, getProfile } from "../../redux/slices/authSlice";
 import { fetchProducts } from "../../redux/slices/CustomerSilce";
 import { fetchCategories } from "../../redux/slices/ProductSlice";
+import {
+  addItem,
+  removeItem,
+  setCartFromLocal,
+  clearCart,
+  createCart,
+  fetchCartByOrderId,
+} from "../../redux/slices/cartSlice";
 
 // Import components
 import Navbar from "../../components/common/Navbar";
@@ -20,12 +28,13 @@ const UserDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [cart, setCart] = useState({});
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  // const [cart, setCart] = useState({});
+  // const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useSelector((state) => state.auth);
   const cartItems = useSelector((state) => state.cart.items);
-
+const { items: cart } = useSelector((state) => state.cart);
+const [isCartOpen, setIsCartOpen] = useState(false);
   // Get user profile
   useEffect(() => {
     dispatch(getProfile());
@@ -61,9 +70,19 @@ const UserDashboard = () => {
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
-      setCart(JSON.parse(storedCart));
+      dispatch(setCartFromLocal(JSON.parse(storedCart)));
     }
-  }, []);
+  }, [dispatch]);
+
+  const addToCart = (product) => {
+      console.log("Adding to cart:", product);
+      dispatch(addItem({ product }));
+    };
+
+    // Remove from cart
+    const removeFromCart = (product) => {
+      dispatch(removeItem({ product }));
+    };
 
   // Function to organize products by category
   const getProductsByCategory = () => {
@@ -99,32 +118,32 @@ const UserDashboard = () => {
     return productsByCategory;
   };
 
-  const addToCart = (product) => {
-    setCart((prev) => {
-      const updatedCart = { ...prev };
-      if (updatedCart[product._id]) {
-        updatedCart[product._id].quantity += 1;
-      } else {
-        updatedCart[product._id] = { ...product, quantity: 1 };
-      }
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      return updatedCart;
-    });
-  };
+  // const addToCart = (product) => {
+  //   setCart((prev) => {
+  //     const updatedCart = { ...prev };
+  //     if (updatedCart[product._id]) {
+  //       updatedCart[product._id].quantity += 1;
+  //     } else {
+  //       updatedCart[product._id] = { ...product, quantity: 1 };
+  //     }
+  //     localStorage.setItem("cart", JSON.stringify(updatedCart));
+  //     return updatedCart;
+  //   });
+  // };
 
-  const removeFromCart = (product) => {
-    setCart((prev) => {
-      const updatedCart = { ...prev };
-      if (updatedCart[product._id]) {
-        updatedCart[product._id].quantity -= 1;
-        if (updatedCart[product._id].quantity <= 0) {
-          delete updatedCart[product._id];
-        }
-      }
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      return updatedCart;
-    });
-  };
+  // const removeFromCart = (product) => {
+  //   setCart((prev) => {
+  //     const updatedCart = { ...prev };
+  //     if (updatedCart[product._id]) {
+  //       updatedCart[product._id].quantity -= 1;
+  //       if (updatedCart[product._id].quantity <= 0) {
+  //         delete updatedCart[product._id];
+  //       }
+  //     }
+  //     localStorage.setItem("cart", JSON.stringify(updatedCart));
+  //     return updatedCart;
+  //   });
+  // };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -137,20 +156,15 @@ const UserDashboard = () => {
   };
 
   // Format price with commas and two decimal places
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "INR",
     }).format(price);
-  };
 
-  // Calculate cart count
   const cartItemsCount = Object.keys(cart).length;
 
-  // Toggle cart visibility
-  const toggleCart = () => {
-    setIsCartOpen(!isCartOpen);
-  };
+  const toggleCart = () => setIsCartOpen(!isCartOpen);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -167,7 +181,7 @@ const UserDashboard = () => {
       <HeroSection />
 
       {/* Main Content - Products by Category */}
-      <div className="mb-16 px-8 lg:px-25">
+      <div className="mb-16 lg:px-25">
         {loading ? (
           <div className="flex justify-center items-center h-32">
             <div className="text-xl">Loading products...</div>
@@ -202,7 +216,9 @@ const UserDashboard = () => {
       </div>
 
       {/* Cart Button */}
-      <CartButton cartItemsCount={cartItemsCount} toggleCart={toggleCart} />
+      <div className="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-50">
+        <CartButton cartItemsCount={cartItemsCount} toggleCart={toggleCart} />
+      </div>
 
       {/* Cart Sidebar */}
       <CartSidebar

@@ -1,5 +1,5 @@
 import React from "react";
-import { Package, Plus, Minus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 
 const ProductCard = ({
   product,
@@ -8,73 +8,83 @@ const ProductCard = ({
   removeFromCart,
   formatPrice,
 }) => {
+  const quantity = cart[product._id]?.quantity || 0;
+
   return (
-    <div className="min-w-[250px] bg-white rounded-lg shadow-md hover:shadow-lg transition duration-300 transform hover:scale-105 flex-shrink-0">
-      <div className="h-48 w-75 bg-gray-100 relative">
-        {product.productImage && product.productImage !== "not available" ? (
+    <div className="group relative border border-gray-200 rounded-lg overflow-hidden h-full hover:shadow-lg transition-all duration-300 flex flex-col">
+      {/* Product Image */}
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
+        {product.productImage ? (
           <img
-            src={`${import.meta.env.VITE_BASE_URL}/uploads/${
-              product.productImage
-            }`}
+            src={product.productImage}
             alt={product.productName}
-            className="w-full h-full object-cover rounded-t-lg"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-emerald-50 to-teal-50 rounded-t-lg relative">
-            <Package size={64} className="text-emerald-300" />
-            <span className="absolute bottom-2 right-2 bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">
-              No Image
-            </span>
+          <div className="w-full h-full flex items-center justify-center bg-gray-300">
+            <span className="text-gray-500 text-sm">No image</span>
+          </div>
+        )}
+
+        {/* Quick Add Overlay */}
+        {quantity === 0 && (
+          <div className="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+            <button
+              onClick={() => addToCart(product)}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-green-700 text-white font-semibold rounded shadow hover:bg-green-600 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add to Cart
+            </button>
           </div>
         )}
       </div>
 
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 truncate">
-          {product.productName}
-        </h3>
-        <p className="text-gray-500 text-sm mt-1 h-10 overflow-hidden">
-          {product.productDescription}
-        </p>
-        <div className="mt-2 flex justify-between items-center">
-          <span className="text-emerald-600 font-bold text-lg">
+      {/* Product Info */}
+      <div className="p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="font-semibold text-gray-800 line-clamp-2 text-sm md:text-base">
+            {product.productName}
+          </h3>
+          {product.productDescription && (
+            <p className="text-xs text-gray-500 line-clamp-1 mt-1">
+              {product.productDescription}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-2 mt-4">
+          <span className="text-lg font-bold text-green-700">
             {formatPrice(product.productPrice)}
           </span>
-          {cart[product._id] ? (
-            <div className="flex justify-between items-center bg-green-600 text-white rounded-md h-10 w-25 py-1 transition-colors">
+
+          {/* Add/Remove Controls */}
+          {quantity > 0 ? (
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
               <button
-                className="px-2 py-2 text-white rounded-md transition-colors"
                 onClick={() => removeFromCart(product)}
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-green-700 hover:text-white transition-colors"
               >
-                <Minus
-                  style={{
-                    color: "white",
-                    width: 18,
-                  }}
-                />
+                <Minus className="h-4 w-4" />
               </button>
-              <p>{cart[product._id].quantity}</p>
+              <span className="font-semibold min-w-[1.5rem] text-center text-gray-800">
+                {quantity}
+              </span>
               <button
-                className="px-2 py-2  text-white rounded-md transition-colors"
                 onClick={() => addToCart(product)}
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-green-700 hover:text-white transition-colors"
               >
-                <Plus
-                  style={{
-                    color: "white",
-                    width: 18,
-                  }}
-                />
+                <Plus className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <div className="flex justify-between items-center bg-green-600 hover:bg-green-700 text-white rounded-md h-10 w-25 transition-colors">
-              <button
-                className="px-2 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                onClick={() => addToCart(product)}
-              >
-                Add to Cart
-              </button>
-            </div>
+            <button
+              onClick={() => addToCart(product)}
+              className="inline-flex items-center gap-1 px-3 py-1 border border-gray-300 text-gray-800 rounded hover:bg-green-700 hover:text-white transition-colors"
+            >
+              <Plus className="h-3 w-3" />
+              Add
+            </button>
           )}
         </div>
       </div>

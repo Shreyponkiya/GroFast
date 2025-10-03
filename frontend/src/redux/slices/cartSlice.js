@@ -1,55 +1,137 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-const loadCartFromLocalStorage = () => {
-  try {
-    const cart = localStorage.getItem("cart");
-    return cart ? JSON.parse(cart) : [];
-  } catch (error) {
-    console.error("Error loading cart from localStorage:", error);
-    return [];
+export const createCart = createAsyncThunk(
+  "cart/createCart",
+  async ({ userId, cartItems, OrderId }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("http://localhost:8000/api/cart/create-cart", {
+        userId,
+        cartItems,
+        OrderId,
+      });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
   }
-};
+);
 
-const saveCartToLocalStorage = (cart) => {
-  try {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  } catch (error) {
-    console.error("Error saving cart to localStorage:", error);
+export const addCartItem = createAsyncThunk(
+  "cart/addCartItem",
+  async ({ userId, productId, quantity }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("http://localhost:8000/api/cart/add-item", {
+        userId,
+        productId,
+        quantity,
+      });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
   }
-};
+);
+
+
+
+export const fetchCartByOrderId = createAsyncThunk(
+  "cart/fetchCartByOrderId",
+  async (OrderId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/api/cart/get-cart/${OrderId}`
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
+  }
+);
+
+export const fetchCart = createAsyncThunk(
+  "cart/fetchCart",
+  async ({ OrderId, userId }, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/api/cart/get-cart?OrderId=${OrderId}&userId=${userId}`
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
+  }
+);
+
 
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    items: loadCartFromLocalStorage(),
+    items: {},
+    loading: false,
+    error: null,
+    currentOrderId: null,
   },
   reducers: {
-    addToCart: (state, action) => {
-      const existing = state.items.find(item => item._id === action.payload._id);
-      if (existing) {
-        existing.quantity += 1;
+    addItem: (state, action) => {
+      const { product } = action.payload;
+      if (state.items[product._id]) {
+        state.items[product._id].quantity += 1;
       } else {
-        state.items.push({ ...action.payload, quantity: 1 });
+        state.items[product._id] = { ...product, quantity: 1 };
       }
-      saveCartToLocalStorage(state.items);
+      localStorage.setItem("cart", JSON.stringify(state.items));
     },
-    removeFromCart: (state, action) => {
-      state.items = state.items.filter(item => item._id !== action.payload);
-      saveCartToLocalStorage(state.items);
+    removeItem: (state, action) => {
+      const { product } = action.payload;
+      if (state.items[product._id]) {
+        state.items[product._id].quantity -= 1;
+        if (state.items[product._id].quantity <= 0) {
+          delete state.items[product._id];
+        }
+      }
+      localStorage.setItem("cart", JSON.stringify(state.items));
+    },
+    setCartFromLocal: (state, action) => {
+      state.items = action.payload || {};
     },
     clearCart: (state) => {
-      state.items = [];
-      saveCartToLocalStorage(state.items);
+      state.items = {};
+      localStorage.removeItem("cart");
     },
-    updateQuantity: (state, action) => {
-      const item = state.items.find(item => item._id === action.payload._id);
-      if (item) {
-        item.quantity = action.payload.quantity;
-      }
-      saveCartToLocalStorage(state.items);
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(createCart.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = {};
+        state.currentOrderId = action.payload.OrderId;
+        localStorage.removeItem("cart");
+      })
+      .addCase(fetchCartByOrderId.fulfilled, (state, action) => {
+        state.items = {};
+        action.payload.products.forEach((p) => {
+          state.items[p.productId._id] = {
+            ...p.productId,
+            quantity: p.quantity,
+          };
+        });
+      })
+    .addCase(fetchCart.fulfilled, (state, action) => {
+  state.items = {};
+  action.payload.products.forEach((p) => {
+    state.items[p.productId._id] = { ...p.productId, quantity: p.quantity };
+  });
+  state.currentOrderId = action.payload.OrderId;
+});
+
   },
 });
 
-export const { addToCart, removeFromCart, clearCart, updateQuantity } = cartSlice.actions;
+export const { addItem, removeItem, setCartFromLocal, clearCart } =
+  cartSlice.actions;
+
 export default cartSlice.reducer;

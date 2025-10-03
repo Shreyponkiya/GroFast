@@ -6,45 +6,41 @@ import {
   verifyPayment,
 } from "../../redux/slices/paymentSlice";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import { createOrder } from "../../redux/slices/orderSlice";
+import { fetchCart } from "../../redux/slices/cartSlice";
 
 const BillComponent = ({ user, OrderId, dispatch }) => {
-  const [cartProducts, setCartProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [cartProducts, setCartProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(3);  
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCartProducts = async () => {
-      if (!OrderId) return;
-      setIsLoading(true);
-      try {
-        const response = await dispatch(GetCartProduct({ OrderId })).unwrap();
-        console.log("Fetched cart products:", response);
-        setCartProducts([response]); // Store the actual cart data
-      } catch (error) {
-        console.error("Failed to fetch cart data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCartProducts();
-  }, [dispatch, OrderId]);
+  // useEffect(() => {
+  //   const fetchCartProducts = async () => {
+  //     if (!OrderId) return;
+  //     setIsLoading(true);
+  //     try {
+  //       const response = await dispatch(GetCartProduct({ OrderId })).unwrap();
+  //       console.log("Fetched cart products:", response);
+  //       setCartProducts([response]); // Store the actual cart data
+  //     } catch (error) {
+  //       console.error("Failed to fetch cart data:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   fetchCartProducts();
+  // }, [dispatch, OrderId]);
 
   // Countdown effect for redirection after successful payment
   useEffect(() => {
-    let timer;
-    if (isRedirecting && countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    } else if (isRedirecting && countdown === 0) {
-      // Redirect to order page
-      navigate(`/user/order/${OrderId}`);
+    if (user) {
+      dispatch(fetchCart({ userId: user._id }));
     }
-    return () => clearTimeout(timer);
-  }, [isRedirecting, countdown, navigate, OrderId]);
+  }, [user, dispatch]);
 
   const handleOrderConfirmation = async (Products) => {
     console.log("Products:", Products);

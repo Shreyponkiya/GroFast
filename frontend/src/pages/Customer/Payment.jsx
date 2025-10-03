@@ -6,6 +6,7 @@ import Navbar from "../../components/common/Navbar";
 import LocationComponent from "../../components/payment/LocationComponent";
 import BillComponent from "../../components/payment/BillComponent";
 
+
 const Payment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -39,6 +40,14 @@ const Payment = () => {
         </div> */}
 
       <div className="max-w-4xl mx-auto pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+        <div>
+          <button
+            className="mb-3 text-green-600 font-semibold"
+            onClick={() => navigate(-1)}
+          >
+            &larr; Back
+          </button>
+        </div>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-green-100">
           {/* Header with both components */}
           <div className="flex flex-col gap-4">
