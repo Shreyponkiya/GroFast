@@ -32,6 +32,7 @@ module.exports.dashboard = async (req, res) => {
 module.exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find().populate("createdBy", "name email");
+    console.log(products);
     res.json({ success: true, products });
   } catch (error) {
     res

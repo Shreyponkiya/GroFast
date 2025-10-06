@@ -1,12 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { GET, POST, PUT, DELETE } from "../../../helper/api_helper";
+import {
+  GET_DASHBOARD_STATS_API,
+  GET_PRODUCT_LIST_API,
+  GET_CATEGORY_LIST_API,
+} from "../../../helper/url_helper";
 
 export const fetchDashboardStats = createAsyncThunk(
   "listing/fetchDashboardStats",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await GET("/superadmin/dashboard");
+      const res = await GET(GET_DASHBOARD_STATS_API);
       console.log("Dashboard Stats Response:", res);
       return res;
     } catch (err) {
@@ -19,8 +24,9 @@ export const fetchProducts = createAsyncThunk(
   "listing/fetchProducts",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await GET("/superadmin/get-products");
-      return res.data;
+      const res = await GET(GET_PRODUCT_LIST_API);
+      console.log("Products Response:", res);
+      return res;
     } catch (err) {
       return rejectWithValue(err.response.data);
     }
@@ -31,8 +37,8 @@ export const fetchCategories = createAsyncThunk(
   "listing/fetchCategories",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await GET("/superadmin/get-categories");
-      return res.data;
+      const res = await GET(GET_CATEGORY_LIST_API);
+      return res;
     } catch (err) {
       return rejectWithValue(err.response.data);
     }
@@ -79,6 +85,8 @@ const listingSlice = createSlice({
   name: "listing",
   initialState: {
     dashboardStats: null, // <-- add this
+    products: [],
+    categories: [],
     shopkeepers: [],
     deliveryBoys: [],
     customerRequests: [],
@@ -100,6 +108,34 @@ const listingSlice = createSlice({
       .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch dashboard stats";
+      })
+      // Fetch Products
+      .addCase(fetchProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload;
+      })
+      .addCase(fetchProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch products";
+      })
+
+      // Fetch Categories
+
+      .addCase(fetchCategories.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCategories.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categories = action.payload;
+      })
+      .addCase(fetchCategories.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch categories";
       })
 
       // Fetch Shopkeepers

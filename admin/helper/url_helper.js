@@ -13,7 +13,8 @@ export const POST_ADD_TO_CART_API = "/api/cart/create-cart";
 export const GET_CART_BY_ORDER_ID_API = "/api/cart/get-cart";
 
 // PAYMENT
-export const POST_CREATE_PAYMENT_INTENT_API = "/api/payment/create-payment-intent";
+export const POST_CREATE_PAYMENT_INTENT_API =
+  "/api/payment/create-payment-intent";
 export const REZORAPAY_GET_KEY_API = "/api/payment/get-key";
 export const POST_CREATE_PAYMENT_VERIFY = "/api/payment/verify-payment";
 
@@ -33,6 +34,9 @@ export const PUT_UPDATE_DELIVERY_BOY_STATUS_API = "/api/delivery/updateStatus";
 
 // LIST
 
-export const GET_SHOPKEEPER_LIST_API = "/api/admin/get-shopkeepers";
-export const GET_DELIVERY_BOY_LIST_API = "/api/admin/get-delivery-boys";
-export const GET_CUSTOMER_REQUESTS_API = "/api/admin/get-customer-requests";
+export const GET_DASHBOARD_STATS_API = "/superadmin/dashboard";
+export const GET_SHOPKEEPER_LIST_API = "/superadmin/get-shopkeepers";
+export const GET_PRODUCT_LIST_API = "/superadmin/products";
+export const GET_CATEGORY_LIST_API = "/superadmin/categories";
+export const GET_DELIVERY_BOY_LIST_API = "/superadmin/get-delivery-boys";
+export const GET_CUSTOMER_REQUESTS_API = "/superadmin/get-customer-requests";
