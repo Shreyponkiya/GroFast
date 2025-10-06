@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom"; // Added Outlet
-import { logout, getProfile } from "../../redux/slices/authSlice";
+import { logout, getProfile } from "../redux/slices/authSlice";
 import { io } from "socket.io-client";
-import { fetchCategories } from "../../redux/slices/ProductSlice"; // Removed fetchProducts since not used globally
-import Navbar from "../../components/common/Navbar";
-import Sidebar from "../../components/common/Sidebar";
-import Layout from "../../components/Layout";
-import MessageComponent from "../../components/Admin/MessageComponent";
+import { fetchCategories } from "../redux/slices/ProductSlice"; // Removed fetchProducts since not used globally
+import Navbar from "../components/common/Navbar";
+import Sidebar from "../components/common/Sidebar";
+import Layout from "../components/Layout";
+
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -117,8 +117,6 @@ const AdminDashboard = () => {
         )}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto bg-emerald-50">
           <div className="bg-white rounded-lg shadow p-6 h-full overflow-auto">
-            {" "}
-
             <Outlet />
           </div>
         </main>
@@ -135,4 +133,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;  
+export default AdminDashboard;

@@ -25,7 +25,6 @@ router.post(
 );
 router.get("/get-cart", authMiddleware.userMiddlewere, cartController.getCart);
 
-
 // Get cart by user (refresh)
 router.get(
   "/user/:userId",

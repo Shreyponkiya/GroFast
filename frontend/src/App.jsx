@@ -15,7 +15,6 @@ import DeliveryDashboard from "./pages/Delivery/DeliveryDashboard";
 import AddProductPage from "./components/Admin/AddProductPage";
 import Payment from "./pages/Customer/Payment";
 import Order from "./pages/Customer/Order";
-// import AddCategories from './pages/AddCategories';
 import PrivateRoute from "./components/PrivateRoute";
 import { toast, ToastContainer } from "react-toastify";
 import "./App.css";

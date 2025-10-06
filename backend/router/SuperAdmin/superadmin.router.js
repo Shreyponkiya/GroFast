@@ -9,39 +9,39 @@ const router = express.Router();
 router.get(
   "/dashboard",
   authMiddleware.userMiddlewere,
-  SuperAdminController.dashboard,
-  roleMiddleware.authorizeRoles("superadmin"),
+  SuperAdminController.dashboard
+  // roleMiddleware.authorizeRoles("superadmin"),
 );
 
 // List routes
 router.get(
   "/products",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("superadmin"),
+  // roleMiddleware.authorizeRoles("superadmin"),
   SuperAdminController.getProducts
 );
 router.get(
   "/categories",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("superadmin"),
+  // roleMiddleware.authorizeRoles("superadmin"),
   SuperAdminController.getCategories
 );
 router.get(
   "/delivery-boys",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("superadmin"),
+  // roleMiddleware.authorizeRoles("superadmin"),
   SuperAdminController.getDeliveryBoys
 );
 router.get(
   "/shopkeepers",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("superadmin"),
+  // roleMiddleware.authorizeRoles("superadmin"),
   SuperAdminController.getShopkeepers
 );
 router.get(
   "/customers",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("superadmin"),
+  // roleMiddleware.authorizeRoles("superadmin"),
   SuperAdminController.getCustomers
 );
 
