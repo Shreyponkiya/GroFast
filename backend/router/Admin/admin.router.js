@@ -11,25 +11,25 @@ router.post(
   "/add-product",
   authMiddleware.userMiddlewere,
   upload.single("productImage"),
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
+  // roleMiddleware.authorizeRoles("admin", "superadmin"),
   adminController.addProduct
 );
 router.post(
   "/add-category",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
+  // roleMiddleware.authorizeRoles("admin", "superadmin"),
   adminController.addCategory
 );
 router.put(
   "/update-product/:productId",
   authMiddleware.userMiddlewere,
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
+  // roleMiddleware.authorizeRoles("admin", "superadmin"),
   upload.single("productImage"),
   adminController.updateProduct
 );
 router.put(
   "/update-category/:categoryId",
-  roleMiddleware.authorizeRoles("admin", "superadmin"),
+  // roleMiddleware.authorizeRoles("admin", "superadmin"),
   authMiddleware.userMiddlewere,
   adminController.updateCategory
 );

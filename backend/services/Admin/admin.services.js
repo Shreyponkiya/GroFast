@@ -125,6 +125,7 @@ module.exports.updateCategory = async function (categoryId, updateData) {
 
 module.exports.getProductsByUserId = async function (userId) {
   const products = await productModel.find({ createdBy: userId });
+  console.log("products : ",products);
   return products;
 };
 
