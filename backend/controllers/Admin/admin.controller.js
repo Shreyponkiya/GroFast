@@ -9,6 +9,10 @@ const {
   deleteProduct,
   deleteCategory
 } = require("../../services/Admin/admin.services");
+const Product = require("../../models/Product.model");
+const Category = require("../../models/ProductCategory.model");
+
+const paginate = require("../../utils/paginate");
 
 module.exports.addProduct = async (req, res) => {
   try {
@@ -93,10 +97,11 @@ module.exports.addCategory = async (req, res) => {
 
 module.exports.getProducts = async (req, res) => {
   try {
-    const products = await getAllProducts();
+    const { page = 1, limit = 10 } = req.query;
+    const result = await paginate(Product, {}, page, limit, { createdAt: -1 });
     res
       .status(200)
-      .json({ message: "Products retrieved successfully", products });
+      .json({ message: "Products retrieved successfully", ...result });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error });
@@ -141,10 +146,13 @@ module.exports.updateCategory = async (req, res) => {
 module.exports.getProductsByUserId = async (req, res) => {
   try {
     const { createdBy } = req.params;
-    const products = await getProductsByUserId(createdBy);
+    const { page = 1, limit = 10 } = req.query;
+    const result = await paginate(Product, { createdBy }, page, limit, {
+      createdAt: -1,
+    });
     res
       .status(200)
-      .json({ message: "Products retrieved successfully", products });
+      .json({ message: "Products retrieved successfully", ...result });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error });
@@ -153,16 +161,16 @@ module.exports.getProductsByUserId = async (req, res) => {
 
 module.exports.getCategories = async (req, res) => {
   try {
-    const categories = await getAllCategories();
+    const { page = 1, limit = 10 } = req.query;
+    const result = await paginate(Category, {}, page, limit, { createdAt: -1 });
     res
       .status(200)
-      .json({ message: "Categories retrieved successfully", categories });
+      .json({ message: "Categories retrieved successfully", ...result });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error });
   }
 };
-
 module.exports.getProductByCategoryIdAndUserId = async (req, res) => {
   try {
     const { categoryId, userId } = req.params;

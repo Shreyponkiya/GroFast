@@ -1,15 +1,16 @@
 const Product = require("../../models/Product.model");
 const Category = require("../../models/ProductCategory.model");
 const User = require("../../models/user.model");
+const paginate = require("../../utils/paginate");
 
 // Dashboard (basic info)
 module.exports.dashboard = async (req, res) => {
   try {
-    const productCount = await Product.countDocuments();
-    const categoryCount = await Category.countDocuments();
-    const deliveryBoyCount = await User.countDocuments({ role: "deliveryBoy" });
-    const shopkeeperCount = await User.countDocuments({ role: "shopkeeper" });
-    const customerCount = await User.countDocuments({ role: "customer" });
+    // const productCount = await Product.countDocuments();
+    // const categoryCount = await Category.countDocuments();
+    // const deliveryBoyCount = await User.countDocuments({ role: "deliveryBoy" });
+    // const shopkeeperCount = await User.countDocuments({ role: "shopkeeper" });
+    // const customerCount = await User.countDocuments({ role: "customer" });
 
     res.json({
       message: "Welcome to the Super Admin Dashboard",
@@ -32,8 +33,11 @@ module.exports.dashboard = async (req, res) => {
 module.exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find().populate("createdBy", "name email");
-    console.log(products);
-    res.json({ success: true, products });
+    const { page = 1, limit = 10 } = req.query;
+    const result = await paginate(Product, {}, page, limit, { createdAt: -1 });
+    res
+      .status(200)
+      .json({ message: "Products retrieved successfully", ...result });
   } catch (error) {
     res
       .status(500)
@@ -49,7 +53,12 @@ module.exports.getProducts = async (req, res) => {
 module.exports.getCategories = async (req, res) => {
   try {
     const categories = await Category.find();
-    res.json({ success: true, categories });
+    const { page = 1, limit = 10 } = req.query;
+    const result = await paginate(Category, {}, page, limit, { createdAt: -1 });
+    res
+      .status(200)
+      .json({ message: "Categories retrieved successfully", ...result });
+
   } catch (error) {
     res
       .status(500)

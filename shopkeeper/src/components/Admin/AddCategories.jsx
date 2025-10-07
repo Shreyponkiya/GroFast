@@ -1,150 +1,232 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { getProfile } from "../../redux/slices/authSlice";
-import { useFormik } from "formik";
-import Validations from "../../SchmaValidations/Validations";
-import { fetchCategories, addCategory } from "../../redux/slices/ProductSlice";
-import { toast } from "react-hot-toast";
+import axios from "axios"; // Using axios to call backend
+import { useDispatch } from "react-redux";
+import { fetchCategories } from "../../redux/slices/ProductSlice";
+import CommonTable from "../common/CommonTable";
+import Pagination from "../common/Pagination";
+import { X } from "lucide-react";
 
-const AddCategories = () => {
+const CategoriesList = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(2); // match your payload
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [formData, setFormData] = useState({
+    categoryCode: "",
+    categoryName: "",
+    categoryDescription: "",
+    isActive: true,
+  });
+
+  // ----- Fetch categories from backend -----
+  const fetchCategoriesData = async (page = 1, limit = itemsPerPage) => {
+    setLoading(true);
+    try {
+      const res = await dispatch(fetchCategories({ page, limit }));
+      const payload = res.data;
+      console.log("Fetched categories:", payload);
+      setCategories(payload.data || []);
+      setCurrentPage(payload.currentPage);
+      setItemsPerPage(payload.itemsPerPage);
+      setTotalPages(payload.totalPages);
+      setTotalItems(payload.totalItems);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCategoriesData = async () => {
-      const data = await dispatch(fetchCategories());
-      setCategories(data.payload.categories);
-    };
-    fetchCategoriesData();
-  }, [dispatch]);
+    fetchCategoriesData(currentPage, itemsPerPage);
+  }, [currentPage, itemsPerPage]);
 
-  const formik = useFormik({
-    initialValues: {
+  // ----- Table columns -----
+  const columns = [
+    { header: "Code", accessor: "categoryCode" },
+    { header: "Name", accessor: "categoryName" },
+    { header: "Description", accessor: "categoryDescription" },
+    {
+      header: "Active",
+      render: (item) => (item.isActive ? "Yes" : "No"),
+    },
+  ];
+
+  // ----- Modal handlers -----
+  const openAddModal = () => {
+    setEditingCategory(null);
+    setFormData({
       categoryCode: "",
       categoryName: "",
       categoryDescription: "",
       isActive: true,
-    },
-    validationSchema: Validations.categorySchema,
-    onSubmit: async (values, { resetForm }) => {
-      setLoading(true);
-      try {        
-        const response = await dispatch(
-          addCategory(values)
-        );
-        if (response.status === 201) {
-          toast.success("Category added successfully!");
-          resetForm();
-        } else {
-          toast.error("Failed to add category.");
-        }
-      } catch (error) {
-        toast.error("An error occurred. Please try again.");
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
+    });
+    setModalOpen(true);
+  };
+
+  const openEditModal = (category) => {
+    setEditingCategory(category);
+    setFormData({
+      categoryCode: category.categoryCode,
+      categoryName: category.categoryName,
+      categoryDescription: category.categoryDescription,
+      isActive: category.isActive,
+    });
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => setModalOpen(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingCategory) {
+        await axios.put(`/api/categories/${editingCategory._id}`, formData);
+      } else {
+        await axios.post(`/api/categories`, formData);
       }
-    },
-  });
+      fetchCategoriesData(currentPage, itemsPerPage);
+      setModalOpen(false);
+    } catch (error) {
+      console.error("Error saving category:", error);
+    }
+  };
+
+  const handleDelete = async (category) => {
+    try {
+      await axios.delete(`/api/categories/${category._id}`);
+      fetchCategoriesData(currentPage, itemsPerPage);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <div className="rounded-lg border-gray-200 p-6 bg-white shadow-md">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Add New Product
-          </h2>
-          <form onSubmit={formik.handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Product Code */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Categories List
+            </h2>
+            <button
+              onClick={openAddModal}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Add Category
+            </button>
+          </div>
+
+          <CommonTable
+            columns={columns}
+            data={categories}
+            loading={loading}
+            showActions={true}
+            onView={(cat) => console.log("View:", cat)}
+            onEdit={openEditModal}
+            onDelete={handleDelete}
+          />
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        </div>
+      </div>
+
+      {/* ----- Modal ----- */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+              onClick={handleCloseModal}
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-semibold mb-4">
+              {editingCategory ? "Edit Category" : "Add Category"}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Product Code
-                </label>
+                <label className="block text-gray-700">Category Code</label>
                 <input
                   type="text"
                   name="categoryCode"
-                  value={formik.values.categoryCode}
-                  onChange={formik.handleChange}
-                  className="w-full border p-2 rounded"
+                  value={formData.categoryCode}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded"
+                  required
                 />
-                {formik.touched.categoryCode && formik.errors.categoryCode && (
-                  <p className="text-red-500 text-sm">
-                    {formik.errors.categoryCode}
-                  </p>
-                )}
               </div>
-
-              {/* Product Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Product Name
-                </label>
+                <label className="block text-gray-700">Category Name</label>
                 <input
                   type="text"
                   name="categoryName"
-                  value={formik.values.categoryName}
-                  onChange={formik.handleChange}
-                  className="w-full border p-2 rounded"
+                  value={formData.categoryName}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded"
+                  required
                 />
-                {formik.touched.categoryName && formik.errors.categoryName && (
-                  <p className="text-red-500 text-sm">
-                    {formik.errors.categoryName}
-                  </p>
-                )}
               </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
+              <div>
+                <label className="block text-gray-700">Description</label>
                 <textarea
                   name="categoryDescription"
-                  value={formik.values.categoryDescription}
-                  onChange={formik.handleChange}
-                  rows="3"
-                  className="w-full border p-2 rounded"
+                  value={formData.categoryDescription}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded"
+                  rows={3}
                 />
-                {formik.touched.categoryDescription &&
-                  formik.errors.categoryDescription && (
-                    <p className="text-red-500 text-sm">
-                      {formik.errors.categoryDescription}
-                    </p>
-                  )}
               </div>
-
-              {/* Is Active */}
-              <div className="md:col-span-2 flex items-center">
+              <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   name="isActive"
-                  checked={formik.values.isActive}
-                  onChange={formik.handleChange}
-                  className="mr-2 h-5 w-5 accent-green-600 rounded"
+                  checked={formData.isActive}
+                  onChange={handleChange}
                 />
-                <label className="text-xl font-medium text-gray-700">
-                  Is Active
-                </label>
+                <span>Active</span>
               </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                {loading ? "Adding..." : "Add Product"}
-              </button>
-            </div>
-          </form>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  {editingCategory ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-export default AddCategories;
+export default CategoriesList;

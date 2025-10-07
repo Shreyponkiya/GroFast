@@ -1,11 +1,35 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import {GET,POST, PUT, DELETE} from '../../../helper/api_helper';
+import { GET, POST, PUT, DELETE } from "../../../helper/api_helper";
 
 export const fetchProducts = createAsyncThunk(
   "products/fetchProductsByUserId",
   async ({ categoryId, userId }) => {
     const response = await GET(`/admin/get-product/${categoryId}/${userId}`);
+    return response.data;
+  }
+);
+
+export const fetchProductById = createAsyncThunk(
+  "products/fetchProductById",
+  async (productId) => {
+    const response = await GET(`/customer/get-products/${productId}`);
+    return response.data;
+  }
+);
+
+export const updateProduct = createAsyncThunk(
+  "products/updateProduct",
+  async ({ id, data }) => {
+    const response = await PUT(`/admin/update-product/${id}`, data);
+    return response.data;
+  }
+);
+
+export const deleteProduct = createAsyncThunk(
+  "products/deleteProduct",
+  async (id) => {
+    const response = await DELETE(`/admin/delete-product/${id}`);
     return response.data;
   }
 );

@@ -3,11 +3,36 @@ const crypto = require("crypto");
 
 module.exports.createUser = async (userData) => {
   try {
-    const newUser = await userModel.create(userData);
-    if (!newUser) {
-      return { success: false, message: "User creation failed" };
+    const { fullname, email, password, role, roleDetails } = userData;
+
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return { success: false, message: "User already exists" };
     }
+
+    if (!fullname || !email || !password || !role) {
+      return { success: false, message: "All fields are required" };
+    }
+    if (password.length < 6) {
+      return {
+        success: false,
+        message: "Password must be at least 6 characters",
+      };
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return { success: false, message: "Invalid email format" };
+    }
+
+    const hashedPassword = await userModel.hashPassword(password);
+    const newUser = new userModel({
+      fullname,
+      email,
+      password: hashedPassword,
+      role,
+      roleDetails,
+    });
     await newUser.save();
+
     return { success: true, user: newUser };
   } catch (error) {
     return { success: false, message: "Error creating user: " + error.message };

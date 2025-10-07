@@ -1,22 +1,28 @@
-const userMoldel = require("../models/user.model");
+const jwt = require("jsonwebtoken");
+const userModel = require("../models/user.model"); // Adjust path as needed
 
 module.exports.userMiddlewere = async (req, res, next) => {
   try {
+    // Get token from header (Authorization: Bearer <token>) or cookie
     const token =
-      req.cookies.token || req.headers["authorization"]?.split(" ")[1];
+      req.header("Authorization")?.replace("Bearer ", "") || req.cookies.token;
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
     }
 
-    const decoded = await userMoldel.verifyAuthToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized" });
+    const decoded = await userModel.verifyAuthToken(token);
+    const user = await userModel.findById(decoded._id).select("-password"); // Exclude password for security
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized: User not found" });
     }
 
-    req.user = decoded;
+    req.user = user;
+    req.token = token;
     next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error", error });
+    console.log("Auth error:", error);
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };

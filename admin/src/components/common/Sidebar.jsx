@@ -42,7 +42,7 @@ const Sidebar = ({
   return (
     <div
       style={{ top: `${navbarHeight}px`, bottom: `${footerHeight}px` }}
-      className={`fixed left-0 z-30 w-64 bg-gradient-to-tl from-green-200 to-green-400 p-5 shadow-md rounded-lg transform transition-transform duration-300 ease-in-out ${
+      className={`fixed left-0 z-30 w-65 bg-gradient-to-tl from-green-200 to-green-400 p-5 lg:pb-7 xl:pb-10 shadow-md rounded-lg transform transition-transform duration-300 ease-in-out ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0 lg:static flex flex-col justify-between overflow-y-auto`}
     >

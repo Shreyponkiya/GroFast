@@ -72,12 +72,15 @@ module.exports.updateProduct = async function (productId, updateData) {
         productCode: updateData.productCode,
         _id: { $ne: productId }, // exclude current product
       });
+      if (existingProduct) {
+        throw new Error("Product code already exists");
+      }
+    }
 
-      // if (existingProduct) {
-      //   throw new Error(
-      //     `Product code ${updateData.productCode} already exists`
-      //   );
-      // }
+    // Handle removeImage if present (assuming controller passes it in updateData)
+    if (updateData.removeImage === "true") {
+      updateData.productImage = null;
+      delete updateData.removeImage;
     }
 
     const updatedProduct = await productModel.findByIdAndUpdate(
@@ -99,7 +102,6 @@ module.exports.updateProduct = async function (productId, updateData) {
     throw new Error("Error updating product: " + error.message);
   }
 };
-
 
 module.exports.updateCategory = async function (categoryId, updateData) {
   try {

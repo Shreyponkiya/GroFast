@@ -11,53 +11,31 @@ const nodemailer = require("nodemailer");
 
 module.exports.register = async (req, res) => {
   try {
-    const { fullname, email, password, role, roleDetails } = req.body;
-    const existingUser = await userModel.findOne({ email });
+    const userData = req.body;
+    const result = await createUser(userData);
 
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-    if (!fullname || !email || !password || !role) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters" });
-    }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
     }
 
-    const hashedPassword = await userModel.hashPassword(password);
-
-    const newUser = await new userModel({
-      fullname,
-      email,
-      password: hashedPassword,
-      role,
-      roleDetails,
-    }).save();
-
-    if (!newUser) {
-      return res.status(400).json({ message: "User registration failed" });
-    }
-
-    console.log("newUser", newUser);
-
-    const token = await newUser.generateAuthToken();
+    const token = await result.user.generateAuthToken();
     if (!token) {
       return res.status(400).json({ message: "Token generation failed" });
     }
+
+    console.log("newUser", result.user);
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
-    
-    res
-      .status(201)
-      .json({ message: "User registered successfully", newUser, token });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: result.user,
+      token,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error", error });
@@ -134,7 +112,8 @@ exports.resetPassword = async (req, res) => {
 module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("email , password : ", email, password);
+    console.log("email, password:", email, password);
+
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -146,16 +125,25 @@ module.exports.login = async (req, res) => {
         .status(400)
         .json({ message: "Password must be at least 6 characters" });
     }
-    console.log("email, password", email, password);
-    const returnuser = await loginUser(email, password);
-    console.log("returnuser", returnuser);
-    if (!returnuser.user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+
+    const result = await loginUser(email, password);
+    console.log("returnuser", result);
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
     }
-    if (!returnuser.token) {
-      return res.status(400).json({ message: "Token generation failed" });
-    }    
-    res.status(200).json({ message: "Login successful", user: returnuser.user, token: returnuser.token,message: returnuser.message });
+
+    res.cookie("token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      user: result.user,
+      token: result.token,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error", error });

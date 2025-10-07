@@ -7,6 +7,7 @@ const MongoConnection = () => {
     .connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 50000,
     })
     .then(() => {
       console.log("MongoDB connected successfully");

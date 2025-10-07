@@ -9,7 +9,6 @@ import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import Layout from "../components/Layout";
 
-
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();

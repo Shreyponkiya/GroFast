@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getProfile } from "../../redux/slices/authSlice";
+import DeletePopup from "../../components/common/DeletePopup";
 import {
   fetchProducts,
   fetchCategories,
-  addProduct,
-  addCategory,
-  fetchProductsByUserId,
+  deleteProduct,
 } from "../../redux/slices/ProductSlice";
 import { ShoppingCart, Edit, Trash2, Plus, Package, Tag } from "lucide-react";
 
@@ -16,6 +15,10 @@ const ShowAdminProduct = () => {
   const [productsByCategory, setProductsByCategory] = useState({});
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // ✅ Added state for delete popup
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -91,13 +94,21 @@ const ShowAdminProduct = () => {
 
   // Function to handle product actions
   const handleEdit = (productId) => {
-    console.log("Edit product:", productId);
-    // Implement edit functionality here
+    navigate(`/admin/edit-product/${productId}`);
   };
 
-  const handleDelete = (productId) => {
-    console.log("Delete product:", productId);
-    // Implement delete functionality here
+  // ✅ Updated delete handler
+  const handleDelete = (id) => {
+    setSelectedProductId(id);
+    setShowDeletePopup(true);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedProductId) {
+      await dispatch(deleteProduct(selectedProductId));
+      setShowDeletePopup(false);
+      setSelectedProductId(null);
+    }
   };
 
   // Product Card Component
@@ -169,7 +180,6 @@ const ShowAdminProduct = () => {
           }`}
           onClick={() => toggleCategory(category._id)}
         >
-          {/* Left side: Icon + Category Name */}
           <div className="flex items-center">
             <Tag className="mr-3 text-emerald-500" />
             <h2 className="text-xl font-semibold text-gray-800">
@@ -177,7 +187,6 @@ const ShowAdminProduct = () => {
             </h2>
           </div>
 
-          {/* Right side: Product count + Toggle Arrow */}
           <div className="flex items-center space-x-3">
             <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
               {products.length} products
@@ -262,18 +271,16 @@ const ShowAdminProduct = () => {
     );
   };
 
-  // Function to navigate to Add Product page from main button
   const handleAddProductClick = () => {
-    navigate("/admin/dashboard", {
+    navigate("/admin/add-product", {
       state: {
         view: "addProduct",
       },
     });
   };
 
-  // Function to navigate to Add Category page
   const handleAddCategoryClick = () => {
-    navigate("/admin/dashboard", {
+    navigate("/admin/manage-categories", {
       state: {
         view: "manageCategories",
       },
@@ -337,6 +344,16 @@ const ShowAdminProduct = () => {
             Create First Category
           </button>
         </div>
+      )}
+
+      {/* ✅ Common Delete Popup */}
+      {showDeletePopup && (
+        <DeletePopup
+          open={showDeletePopup}
+          onClose={() => setShowDeletePopup(false)}
+          onConfirm={confirmDelete}
+          message="Are you sure you want to delete this product?"
+        />
       )}
     </div>
   );

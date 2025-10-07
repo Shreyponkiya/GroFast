@@ -67,10 +67,6 @@ userSchema.methods.generateAuthToken = async function () {
   return token;
 };
 
-// userSchema.methods.comparePassword = async function (password) {
-//   const isMatch = await bcrypt.compare(password, this.password);
-//   return isMatch;
-// };
 userSchema.methods.comparePassword = async function (password) {
   const isMatch = await bcrypt.compare(password, this.password);
   return isMatch;
@@ -91,6 +87,6 @@ userSchema.statics.verifyAuthToken = async function (token) {
   }
 };
 
-const userModel = new mongoose.model("User", userSchema);
+const userModel = mongoose.model("User", userSchema);
 
 module.exports = userModel;

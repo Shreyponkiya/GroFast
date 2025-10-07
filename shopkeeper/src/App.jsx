@@ -14,6 +14,7 @@ import Register from "./pages/Auth/Register";
 import AdminDashboard from "./pages/Admin/AdminDashboard"; // Now acts as AdminLayout
 // import DeliveryDashboard from "./pages/Delivery/DeliveryDashboard";
 import AddProduct from "./components/Admin/AddProductPage"; // Renamed import to match component
+import EditProductPage from "./components/Admin/EditProductPage";
 import AddCategories from "./components/Admin/AddCategories"; // Assuming this is ManageCategories
 import ShowAdminProduct from "./components/Admin/ShowAdminProduct"; // Assuming this is ProductList
 import ViewInventory from "./components/Admin/ViewInventory"; // New component, import the new file (code provided below)
@@ -41,12 +42,37 @@ function App() {
                 </PrivateRoute>
               }
             >
-              <Route path="dashboard" element={<div className="text-center py-4"><h2 className="text-xl font-semibold">Welcome to Admin Dashboard</h2></div>} /> {/* Simple home content, aligned center */}
-              <Route path="product-list" element={<ShowAdminProduct />} /> {/* Product List route */}
-              <Route path="add-product" element={<AddProduct />} /> {/* Add Product route (category selection inside component) */}
-              <Route path="manage-categories" element={<AddCategories />} /> {/* Manage Categories route */}
-              <Route path="view-inventory" element={<ViewInventory />} /> {/* View Inventory route */}
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route
+                path="dashboard"
+                element={
+                  <div className="text-center py-4">
+                    <h2 className="text-xl font-semibold">
+                      Welcome to Admin Dashboard
+                    </h2>
+                  </div>
+                }
+              />{" "}
+              {/* Simple home content, aligned center */}
+              <Route path="product-list" element={<ShowAdminProduct />} />{" "}
+              {/* Product List route */}
+              <Route path="add-product" element={<AddProduct />} />{" "}
+              {/* Add Product route (category selection inside component) */}
+              <Route
+                path="/admin/edit-product/:id"
+                element={<EditProductPage />}
+              />{" "}
+              {/* Edit Product route */}
+              <Route
+                path="manage-categories"
+                element={<AddCategories />}
+              />{" "}
+              {/* Manage Categories route */}
+              <Route path="view-inventory" element={<ViewInventory />} />{" "}
+              {/* View Inventory route */}
+              <Route
+                index
+                element={<Navigate to="/admin/dashboard" replace />}
+              />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
